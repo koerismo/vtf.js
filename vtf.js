@@ -86,7 +86,8 @@ function writeVTFHeader(isize,iargs={},iflags={}) {
 }
 
 
-function dataFromImageURL(isrc,iargs) {
+
+function dataFromImage(img,iargs) {
 	var args = {
 		'w':128, //width
 		'h':128, //height
@@ -99,19 +100,40 @@ function dataFromImageURL(isrc,iargs) {
 		canv.width = 128, canv.height = 128
 		let ctx = canv.getContext('2d')
 
+		try {ctx.drawImage(img,0,0,args.w,args.h)}
+		catch(e) {reject(e)}
+		resolve(ctx.getImageData(0,0,args.w,args.h))
+
+	})
+}
+
+function dataFromImageURL(isrc,iargs) {
+	return new Promise( (resolve, reject) => {
 		let img = new Image()
 		img.onload = function() {
-			try {ctx.drawImage(img,0,0,args.w,args.h)}
+			try {
+				dataFromImage(img).then((x)=>{resolve(x)})
+			}
 			catch(e) {reject(e)}
-			resolve(ctx.getImageData(0,0,args.w,args.h))
+		}
+		img.onerror = function(e) {
+			reject(e)
 		}
 		img.src = isrc
 
 	})
 }
 
+async function vtfFromImage(image,args={},flags={}) {
+	/* accepts Image object */
+	let VTFBody = await dataFromImage(image,args)
+	let VTFHeader = writeVTFHeader(args,flags)
+	let file = VTFHeader.concat(Array.from(VTFBody.data))
+	return new Uint8Array(file)
+}
 
-async function createVTF(isrc,args={},flags={}) {
+async function vtfFromUrl(isrc,args={},flags={}) {
+	/* accepts image url */
 	let VTFBody = await dataFromImageURL(isrc,args)
 	let VTFHeader = writeVTFHeader(args,flags)
 	let file = VTFHeader.concat(Array.from(VTFBody.data))
