@@ -68,7 +68,7 @@ function writeVTFHeader(isize,iargs={},iflags={}) {
 		64,0,0,0,				/* Header size. Taking it from sprays.tk again lmao */
 		...( (args.w).toShort() ),		/* Width */
 		...( (args.h).toShort() ),		/* Height */
-		...( flags.toBytes(4) ),		/* Flags */
+		...( flagsum.toBytes(4) ),		/* Flags */
 		1,					/* # Of frames*/
 		0					/* First frame */
 	]
