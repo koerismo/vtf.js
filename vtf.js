@@ -34,50 +34,50 @@ function writeVTFHeader(isize,iargs={},iflags={}) {
 	}
 	
 	var flags = {
-		'point_sampling':			0,/* Point sampling 			(aka pixel art) */
-		'trilinear_sampling': 0,/* Trilinear sampling 	(aka mediocre sampling) */
-		'anis_sampling':			0,/* Anistrophic sampling (aka high-quality sampling) */
-		'clamp_s': 			1,			/* Prevent tiling on S */
-		'clamp_t': 			1,			/* Prevent tiling on T */
-		'hint_dxt5':		0,			/* Used for skyboxes */
-		'normalmap':		0,			/* Whether the texture is a normal map. */
-		'no_mipmaps':		1,			/* Disables Mipmaps */
-		'no_lod': 			1,			/* No Level Of Detail */
-		'one_bit_alpha':			0,/* One-bit alpha */
-		'eight_bit_alpha':		1,/* Eight-bit alpha */
+		'point_sampling':	0,	/* Point sampling 			(aka pixel art) */
+		'trilinear_sampling':	0,	/* Trilinear sampling 	(aka mediocre sampling) */
+		'anis_sampling':	0,	/* Anistrophic sampling (aka high-quality sampling) */
+		'clamp_s': 		1,	/* Prevent tiling on S */
+		'clamp_t': 		1,	/* Prevent tiling on T */
+		'hint_dxt5':		0,	/* Used for skyboxes */
+		'normalmap':		0,	/* Whether the texture is a normal map. */
+		'no_mipmaps':		1,	/* Disables Mipmaps */
+		'no_lod': 		1,	/* No Level Of Detail */
+		'one_bit_alpha':	0,	/* One-bit alpha */
+		'eight_bit_alpha':	1,	/* Eight-bit alpha */
 		...iflags
 	} 
 	
 	var flagsum = 
-								0x0001 * flags.point_sampling +
-								0x0002 * flags.trilinear_sampling +
-								0x0004 * flags.clamp_s +
-								0x0008 * flags.clamp_t +
-								0x0010 * flags.anis_sampling +
-								0x0020 * flags.hint_dxt5 +
-								/* 0x0040 is depreciated? */
-								0x0080 * flags.normalmap +
-								0x0100 * flags.no_mipmaps +
-								0x0200 * flags.no_lod +
-								0x1000 * flags.one_bit_alpha +
-								0x2000 * flags.eight_bit_alpha 
+		0x0001 * flags.point_sampling +
+		0x0002 * flags.trilinear_sampling +
+		0x0004 * flags.clamp_s +
+		0x0008 * flags.clamp_t +
+		0x0010 * flags.anis_sampling +
+		0x0020 * flags.hint_dxt5 +
+		/* 0x0040 is depreciated? */
+		0x0080 * flags.normalmap +
+		0x0100 * flags.no_mipmaps +
+		0x0200 * flags.no_lod +
+		0x1000 * flags.one_bit_alpha +
+		0x2000 * flags.eight_bit_alpha 
 
 	var header = [
 		...(	'VTF\0'.toBytes(4)	),	/* Beginning thing. */
-		7,0,0,0,	1,0,0,0,						/* Reallllly stretched out version number, I guess. */
-		64,0,0,0,										 /* Header size. Taking it from sprays.tk again lmao */
-		...( (args.w).toShort() ),			 /* Width */
-		...( (args.h).toShort() ),			 /* Height */
-		...( flags.toBytes(4) ),			/* Flags */
-		1,														/* # Of frames*/
-		0														 /* First frame */
+		7,0,0,0,	1,0,0,0,		/* Reallllly stretched out version number, I guess. */
+		64,0,0,0,				/* Header size. Taking it from sprays.tk again lmao */
+		...( (args.w).toShort() ),		/* Width */
+		...( (args.h).toShort() ),		/* Height */
+		...( flags.toBytes(4) ),		/* Flags */
+		1,					/* # Of frames*/
+		0					/* First frame */
 	]
 
 	header = header.concat(Array(64-header.length-8).fill(0)) /* Fuck you, filling the rest of the header with 0s. */
 	header = header.concat([
 		args.mipmap_count, 13,	/* # Of Mipmaps,	DXT1 low-res data ID */
-		0, 									0,
-
+		0, 0,
+		
 		0, 0,	 /* I don't know what this does, but I'll just assume that it'll work. */
 		0, 1
 	])
@@ -88,9 +88,9 @@ function writeVTFHeader(isize,iargs={},iflags={}) {
 
 function dataFromImageURL(isrc,iargs) {
 	var args = {
-			'w':128, //width
-			'h':128, //height
-			...iargs //inherit args
+		'w':128, //width
+		'h':128, //height
+		...iargs //inherit args
 	}
 	
 	return new Promise( (resolve, reject) => { /* Since this is an async function, make a new promise to keep everything nice. */
