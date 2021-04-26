@@ -70,15 +70,15 @@ class VTF {
 
 	get body() {
 		var body = []
-		for (let mipmap = 1; mipmap <= this.mipmaps; mipmap++) {
+		for (let mipmap = this.mipmaps; mipmap > 0; mipmap-=1) {
 			body = body.concat( this.encode(this.getMipmap(mipmap)) )
 		}
 		return body
 	}
 
-	export() {
-		return new Uint8Array(this.header.concat(this.body))
-	}
+	export() { return new Uint8Array(this.header.concat(this.body)) }
+
+  blob() { return new Blob([this.export()]) }
 
 
 	encode(x) {
