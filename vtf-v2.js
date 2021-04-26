@@ -43,26 +43,23 @@ Array.prototype.shorts = function() {
 
 
 class VTF {
-	constructor(image, flagsum, format='RGBA8888',args={}) {
-		this.image = image
+	constructor(images, flagsum, format='RGBA8888',args={}) {
+		this.images = images
 		this.format = format // RGBA8888, RGB888, I8, A8, IA88, DXT1, DXT5
 		this.mipmaps = args.mipmaps||1
 		this.flagsum = flagsum
-		this.frames = 1
 	}
 
 	get header() {
-
-		var header = [
+		return [
 			...'VTF\0'.bytes(),				//  4: Signature
 			7,0,0,0,2,0,0,0,				//  8: Version number
 			64,0,0,0,					//  4: Header size
-			...this.image.width.short(),			//  2: Width
-			...this.image.height.short(),			//  2: Height
+			...this.images[0].width.short(),		//  2: Width
+			...this.images[0].height.short(),		//  2: Height
 			...this.flagsum.bytes(4),			//  4: Flags
-			...this.frames.short(),				//  2: Frame count
+			...this.images.length.short(),			//  2: Frame count
 			0,0,						//  2: First frame index
-
 			0,0,0,0,		// Padding
 
 			0,0,0,0,		// 12: Reflectivity vector
@@ -70,24 +67,21 @@ class VTF {
 			0,0,0,0,
 
 			0,0,0,0,		// Padding
-
 			0,0,0,0,		//  4: Bumpmap scale
-
 			...this.formatIndex(this.format).bytes(4),	//  4: High-res image format ID
 			this.mipmaps,					//  1: Mipmap count
 			...this.formatIndex('DXT1').bytes(4),		//  4: Low-res image format ID (Always DXT1)
-
 			0,0,			//  2: Low-res image width/height
 			1			//  1: Largest mipmap depth
 		]
-
-		return header
 	}
 
 	get body() {
 		var body = []
-		for (let mipmap = this.mipmaps; mipmap > 0; mipmap-=1) {
-			body = body.concat( this.encode(this.getMipmap(mipmap)) )
+		for (let mipmap = this.mipmaps; mipmap > 0; mipmap-=1) { // Mipmaps go from smallest to largest
+			for (let frame = 0; frame < this.images.length; frame++) {
+				body = body.concat( this.encode(this.getMipmap(mipmap,frame)) )
+			}
 		}
 		return body
 	}
@@ -127,12 +121,12 @@ class VTF {
 		return out
 	}
 
-	getMipmap(x) {
+	getMipmap(index,frame) {
 		var tCanv = document.createElement('CANVAS')
-		tCanv.width = this.image.width/(2**(x-1))
-		tCanv.height = this.image.height/(2**(x-1))
+		tCanv.width = this.images[0].width/(2**(index-1))
+		tCanv.height = this.images[0].height/(2**(index-1))
 		var tCtx = tCanv.getContext('2d')
-		tCtx.drawImage(this.image,0,0,tCanv.width,tCanv.height)
+		tCtx.drawImage(this.images[frame],0,0,tCanv.width,tCanv.height)
 		return tCtx.getImageData(0,0,tCanv.width,tCanv.height).data
 	}
 
