@@ -38,7 +38,7 @@ class VTF {
 	constructor(image, flagsum, format='RGBA8888',args={}) {
 		this.image = image
 		this.format = format // RGBA8888, RGB888, I8, A8, IA88, DXT1, DXT5
-		this.mipmaps = args.mipmaps||0
+		this.mipmaps = args.mipmaps||1
 		this.flagsum = flagsum
 	}
 
