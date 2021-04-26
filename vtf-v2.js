@@ -27,6 +27,7 @@ Number.prototype.bytes = function(len) { return Array(len).fill('').map((x,y)=>{
 
 Number.prototype.short = function() { return [this & 0xFF, (this >>> 8) & 0xFF] }
 
+/* // These aren't being used anywhere, but I'm keeping them just in case.
 Uint8ClampedArray.prototype.shorts = function() {
 	let out = []
 	this.forEach((x)=>{ out = out.concat( x.bytes(2) ) })
@@ -38,7 +39,7 @@ Array.prototype.shorts = function() {
 	this.forEach((x)=>{ out = out.concat( x.short() ) })
 	return out
 }
-
+*/
 
 
 class VTF {
@@ -47,30 +48,38 @@ class VTF {
 		this.format = format // RGBA8888, RGB888, I8, A8, IA88, DXT1, DXT5
 		this.mipmaps = args.mipmaps||1
 		this.flagsum = flagsum
+		this.frames = 1
 	}
 
-	_toBytes(st) {}
-
 	get header() {
-		var header = [
-			...(	'VTF\0'.bytes()	),	/* Beginning thing. */
-			7,0,0,0,	1,0,0,0,			/* Reallllly stretched out version number, I guess. */
-			64,0,0,0,						/* Header size. Taking it from sprays.tk again lmao */
-			...( (this.image.width).short() ),		/* Width */
-			...( (this.image.height).short() ),		/* Height */
-			...( this.flagsum.bytes(4) ),				/* Flags */
-			1,					/* # Of frames*/
-			0					/* First frame */
-		]
 
-		header = header.concat(Array(64-header.length-8).fill(0))
-		header = header.concat([
-			this.mipmaps, 13,	/* # Of Mipmaps,	DXT1 low-res data ID */
-			0, 0,
-			
-			0, 0,	 /* I don't know what this does, but I'll just assume that it'll work. */
-			0, 1
-		])
+		var header = [
+			...'VTF\0'.bytes(),				//  4: Signature
+			7,0,0,0,2,0,0,0,				//  8: Version number
+			64,0,0,0,					//  4: Header size
+			...this.image.width.short(),			//  2: Width
+			...this.image.height.short(),			//  2: Height
+			...this.flagsum.bytes(4),			//  4: Flags
+			...this.frames.short(),				//  2: Frame count
+			0,0,						//  2: First frame index
+
+			0,0,0,0,		// Padding
+
+			0,0,0,0,		// 12: Reflectivity vector
+			0,0,0,0,
+			0,0,0,0,
+
+			0,0,0,0,		// Padding
+
+			0,0,0,0,		//  4: Bumpmap scale
+
+			...this.formatIndex(this.format).bytes(4),	//  4: High-res image format ID
+			this.mipmaps,					//  1: Mipmap count
+			...this.formatIndex('DXT1').bytes(4),		//  4: Low-res image format ID (Always DXT1)
+
+			0,0,			//  2: Low-res image width/height
+			1			//  1: Largest mipmap depth
+		]
 
 		return header
 	}
@@ -125,5 +134,20 @@ class VTF {
 		var tCtx = tCanv.getContext('2d')
 		tCtx.drawImage(this.image,0,0,tCanv.width,tCanv.height)
 		return tCtx.getImageData(0,0,tCanv.width,tCanv.height).data
+	}
+
+	formatIndex(x) {
+		const formats = {
+			'RGBA8888': 0,
+			'RGB888': 2,
+			'I8': 5,
+			'IA88': 6,
+			'A8': 8,
+			'DXT1': 13,
+			'DXT3': 14,
+			'DXT5': 15
+		}
+		if (formats[x] != undefined) {return formats[x]}
+		else {return null}
 	}
 }
