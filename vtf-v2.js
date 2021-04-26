@@ -1,3 +1,10 @@
+/*
+VTF.JS
+A javascript library to create VTF (Valve Texture Format) files.
+Created by Koerismo(Baguettery)
+*/
+
+
 const VTF_FLAGS = {
 	'point_sampling':		0x0001,	/* Point sampling 			(aka pixel art) */
 	'trilinear_sampling':	0x0002,	/* Trilinear sampling 	(aka mediocre sampling) */
@@ -90,10 +97,13 @@ class VTF {
 				transform = (x)=>{return [ x[0],x[1],x[2],x[3] ]}
 				break;
 			case 'I8':
-				transform = (x)=>{return [ x[0] ]}
+				transform = (x)=>{return [ x[0] ]} /* Use red channel for greyscale */
 				break;
 			case 'A8':
 				transform = (x)=>{return [ x[3] ]}
+				break;
+			case 'IA88':
+				transform = (x)=>{return [ x[0], x[3] ]}
 				break;
 			default:
 				throw(`Format ${this.format} not recognized!`)
