@@ -104,7 +104,7 @@ class VTF {
 		// use the transform function to reorganize image data
 		var out = []
 		for (let p = 0; p < x.length; p += 4) {
-			let pixelSet = [ x[p], x[p+1], x[p+2], x[p+3] ].shorts() // convert RGBA to list of shorts
+			let pixelSet = [ x[p], x[p+1], x[p+2], x[p+3] ]
 			out = out.concat(transform( pixelSet ))
 		}
 		return out
