@@ -77,9 +77,7 @@ class VTF {
 	}
 
 	export() { return new Uint8Array(this.header.concat(this.body)) }
-
-  blob() { return new Blob([this.export()]) }
-
+	blob() { return new Blob([this.export()]) }
 
 	encode(x) {
 		// Takes RGBA image data and transforms into the vtf encoding
