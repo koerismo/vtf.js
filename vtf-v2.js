@@ -1,3 +1,5 @@
+import 'palettizeRGB.js' //import palettizeRGB function
+
 /*
 VTF.JS
 A javascript library to create VTF (Valve Texture Format) files.
@@ -89,7 +91,12 @@ class VTF {
 	export() { return new Uint8Array(this.header.concat(this.body)) }
 	blob() { return new Blob([this.export()]) }
 
-	encode(x) {
+	encode565(rgba) {
+		return rgba
+	}
+
+	encode(ig) {
+		const data = ig.data
 		// Takes RGBA image data and transforms into the vtf encoding
 		var transform;
 		switch(this.format) {
@@ -108,16 +115,49 @@ class VTF {
 			case 'IA88':
 				transform = (x)=>{return [ x[0], x[3] ]}
 				break;
+			case 'DXT1':
+				break;
 			default:
 				throw(`Format ${this.format} not recognized!`)
 		}
 
-		// use the transform function to reorganize image data
-		var out = []
-		for (let p = 0; p < x.length; p += 4) {
-			let pixelSet = [ x[p], x[p+1], x[p+2], x[p+3] ]
-			out = out.concat(transform( pixelSet ))
+		if (this.format === 'DXT1') {
+
+			function getBlock(x,y) { // Retrieves a 4x4 block of pixels starting at x,y
+				let out = []
+				for (let py = 0; py < 4; py++) {
+					for (let px = 0; px < 4; px++) {
+						const ind = ((x+px)*4)+((y+py)*ig.width*4)
+						out = out.concat( ig.data.slice(ind,ind+4) )
+					}
+				}
+				return out
+			}
+
+			var out = []
+			for (var y = 0; y < ig.height; y+=4) {
+				for (var x = 0; x < ig.width; x+=4) {
+					const compressed = palettizeRGB(getBlock(x,y))
+					const block_out = [
+						...encode565(compressed[0][0]), // color A
+						...encode565(compressed[0][1]), // color B
+						...compressed[1]		// index
+					]
+					out = out.concat(block_out)
+				}
+			}
+
 		}
+
+		else {	// uncompressed formats
+			// use the transform function to reorganize image data
+			var out = []
+			for (let p = 0; p < data.length; p += 4) {
+				let pixelSet = [ data[p], data[p+1], data[p+2], data[p+3] ]
+				out = out.concat(transform( pixelSet ))
+			}
+		}
+
 		return out
 	}
 
@@ -127,13 +167,14 @@ class VTF {
 		tCanv.height = this.images[0].height/(2**(index-1))
 		var tCtx = tCanv.getContext('2d')
 		tCtx.drawImage(this.images[frame],0,0,tCanv.width,tCanv.height)
-		return tCtx.getImageData(0,0,tCanv.width,tCanv.height).data
+		return tCtx.getImageData(0,0,tCanv.width,tCanv.height)
 	}
 
 	formatIndex(x) {
 		const formats = {
 			'RGBA8888': 0,
 			'RGB888': 2,
+			'RGB565': 4,
 			'I8': 5,
 			'IA88': 6,
 			'A8': 8,
