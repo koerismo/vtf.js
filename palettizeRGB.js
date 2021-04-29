@@ -1,5 +1,4 @@
 function palettizeRGB(block) {
-
 	function colorDiff(colorA,colorB) {
 		return Math.sqrt( (colorB[0] - colorA[0])**2 + (colorB[1]-colorA[1])**2 + (colorB[2]-colorA[2])**2 )
 	}
@@ -10,8 +9,18 @@ function palettizeRGB(block) {
 			 Math.round( colorB[2]*mix + colorA[2]*(1-mix) ) ]
 	}
 
+	function colorValue565(rgb) {
+	return  ((rgb[0]<<8) & 0b1111100000000000) |
+		((rgb[1]<<3) & 0b0000011111100000) |
+		((rgb[2]>>3) & 0b0000000000011111)
+	}
+
+	function swapRB(rgb) {
+		return [b,g,r]
+	}
+
 	// Pick two most contrasting colors
-	var maxdiff = {'cA':0,'cB':0,'diff':0}
+	var maxdiff = {'cA':null,'cB':null,'diff':-1}
 	for (var pixelA = 0; pixelA < block.length; pixelA+=3) {
 		for (var pixelB = 0; pixelB < block.length; pixelB+=3) {
 			let colorA = block.slice(pixelA,pixelA+3)
@@ -24,10 +33,13 @@ function palettizeRGB(block) {
 	// Lerp palette
 	var palette = [
 		maxdiff.cA,
-		colorLerp(maxdiff.cA, maxdiff.cB, 0.25),
-		colorLerp(maxdiff.cA, maxdiff.cB, 0.75),
+		colorLerp(maxdiff.cA, maxdiff.cB, 0.33),
+		colorLerp(maxdiff.cA, maxdiff.cB, 0.66),
 		maxdiff.cB
         ]
+
+	if (colorValue565(maxdiff.cA) <= colorValue565(maxdiff.cB)) { palette = palette.reverse() } // I'm just as confused as you are
+
 
 	var enum_palette = palette.map((val,ind)=>{return [val,ind]})
 	var out_index = [] // Initiate index output
@@ -41,8 +53,8 @@ function palettizeRGB(block) {
 	}
 
 	return [
-		[maxdiff.cA,maxdiff.cB],
-		out_index
+		[palette[0],palette[3]],
+		out_index//[0,0,1,1,0,0,1,1,2,2,3,3,2,2,3,3]
 	]
 
 }
