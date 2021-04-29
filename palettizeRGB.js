@@ -46,5 +46,3 @@ function palettizeRGB(block) {
 	]
 
 }
-
-export { palettizeRGB }
