@@ -90,7 +90,10 @@ class VTF {
 	blob() { return new Blob([this.export()]) }
 
 	encode565(rgba) {
-		return rgba
+		return [
+			(rgba[0] & 0b11111000) | (rgba[1] >> 5),
+			(rgba[1] << 5) & 0b11100000 | (rgba[2] >> 3)
+		]
 	}
 
 	encode(ig) {
@@ -126,8 +129,16 @@ class VTF {
 				for (let py = 0; py < 4; py++) {
 					for (let px = 0; px < 4; px++) {
 						const ind = ((x+px)*4)+((y+py)*ig.width*4)
-						out = out.concat( ig.data.slice(ind,ind+4) )
+						out = out.concat( Array.from(ig.data.slice(ind,ind+3)) ) // For RGBA, use ind+4
 					}
+				}
+				return out
+			}
+
+			function compressToByte(indics) {
+				var out = []
+				for (let ind = 0; ind < indics.length; ind+=4) {
+					out.push( ((indics[ind] << 0) & 0b00000011) | ((indics[ind+1] >> 2) & 0b00001100) | ((indics[ind+2] << 4) & 0b00110000) | ((indics[ind+3] << 6) & 0b11000000) )
 				}
 				return out
 			}
@@ -136,10 +147,11 @@ class VTF {
 			for (var y = 0; y < ig.height; y+=4) {
 				for (var x = 0; x < ig.width; x+=4) {
 					const compressed = palettizeRGB(getBlock(x,y))
+					console.log('Compressed block ',getBlock(x,y),'to',compressed)
 					const block_out = [
-						...encode565(compressed[0][0]), // color A
-						...encode565(compressed[0][1]), // color B
-						...compressed[1]		// index
+						...this.encode565(compressed[0][0]),	// color A
+						...this.encode565(compressed[0][1]),	// color B
+						...compressToByte(compressed[1])	// index
 					]
 					out = out.concat(block_out)
 				}
