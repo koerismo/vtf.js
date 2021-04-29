@@ -1,5 +1,3 @@
-import './palettizeRGB.js' //import palettizeRGB function
-
 /*
 VTF.JS
 A javascript library to create VTF (Valve Texture Format) files.
