@@ -91,11 +91,12 @@ class VTF {
 
 	encode565(rgb) {
 		return [
-			((rgb[1]<<5) & 0b11100000) | ((rgb[0]>>3) & 0b00011111),
-			((rgb[2])    & 0b11111000) | ((rgb[1]>>5) & 0b00000111)
+			(rgb[1] << 3) & 0b11100000 | (rgb[2] >> 3),
+			(rgb[0] & 0b11111000) | (rgb[1] >> 5)
 		]
 	}
 
+	/* Encodes the image data provided into this object's format. */
 	encode(ig) {
 		const data = ig.data
 		// Takes RGBA image data and transforms into the vtf encoding
@@ -128,7 +129,7 @@ class VTF {
 		if (this.format === 'DXT1') {
 
 			function getBlock(x,y) { // Retrieves a 4x4 block of pixels starting at x,y
-				let out = []
+				let out = []	 // TODO: MAKE THIS USE UINT8ARRAY FOR EFFICIENCY
 				for (let py = 0; py < 4; py++) {
 					for (let px = 0; px < 4; px++) {
 						const ind = ((x+px)*4)+((y+py)*ig.width*4)
@@ -138,22 +139,26 @@ class VTF {
 				return out
 			}
 
-			function compressToByte(indics) {
-				var out = []
-				for (let ind = 0; ind < indics.length; ind+=4) {
-					out.push( ((indics[ind+0] << 0) & 0b00000011) | ((indics[ind+1] << 2) & 0b00001100) | ((indics[ind+2] << 4) & 0b00110000) | ((indics[ind+3] << 6) & 0b11000000) )
+			function compressIndex(table) {
+				let out = new Uint8Array(table.length/4)
+				for (let ind = 0; ind < table.length; ind+=4) {
+					out[ind/4] =	((table[ind+3] << 6) & 0b11000000) |
+							((table[ind+2] << 4) & 0b00110000) |
+							((table[ind+1] << 2) & 0b00001100) |
+							((table[ind+0] << 0) & 0b00000011)
 				}
 				return out
 			}
 
-			var out = []
+			var out = []		// TODO: MAKE THIS USE UINT8ARRAY FOR EFFICIENCY
 			for (var y = 0; y < ig.height; y+=4) {
 				for (var x = 0; x < ig.width; x+=4) {
 					const compressed = palettizeRGB(getBlock(x,y))
+					// Right here, if compressed[0] is inspected, the colours appear to be not corrupted
 					const block_out = [
 						...this.encode565(compressed[0][0]),	// color A
 						...this.encode565(compressed[0][1]),	// color B
-						...compressToByte(compressed[1])	// index
+						...compressIndex(compressed[1])		// Compress index into bits
 					]
 					out = out.concat(block_out)
 				}
@@ -173,6 +178,7 @@ class VTF {
 		return out
 	}
 
+	/* Renders the input frame at a size of 0.5**(index-1) and returns the image data. */
 	getMipmap(index,frame) {
 		var tCanv = document.createElement('CANVAS')
 		tCanv.width = this.images[0].width/(2**(index-1))
@@ -182,6 +188,7 @@ class VTF {
 		return tCtx.getImageData(0,0,tCanv.width,tCanv.height)
 	}
 
+	/* Retrieves the format index for use in the header block. */
 	formatIndex(x) {
 		const formats = {
 			'RGBA8888': 0,
