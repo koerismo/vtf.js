@@ -1,7 +1,7 @@
-/*
-VTF.JS
-A javascript library to create VTF (Valve Texture Format) files.
-Created by Koerismo(Baguettery)
+/**
+	VTF.JS
+	A javascript library to create VTF (Valve Texture Format) files.
+	Created by Koerismo(Baguettery)
 */
 
 
@@ -20,28 +20,23 @@ const VTF_FLAGS = {
 }
 
 
-
 String.prototype.bytes = function() { return this.split('').map((x)=>{return x.charCodeAt()}) }
-
 Number.prototype.bytes = function(len) { return Array(len).fill('').map((x,y)=>{return (this >>> y*8) & 0xFF }) }
-
 Number.prototype.short = function() { return [this & 0xFF, (this >>> 8) & 0xFF] }
 
-/* // These aren't being used anywhere, but I'm keeping them just in case.
-Uint8ClampedArray.prototype.shorts = function() {
-	let out = []
-	this.forEach((x)=>{ out = out.concat( x.bytes(2) ) })
-	return new Uint8ClampedArray(out)
-}
+/**
+	A class that represents VTF-convertable image data.
 
-Array.prototype.shorts = function() {
-	let out = []
-	this.forEach((x)=>{ out = out.concat( x.short() ) })
-	return out
-}
+	@author Baguettery
+
+	@param {Array} images A list of Image() objects. These are read into a canvas to be mipmapped.
+	@param {Number} flagsum The sum of image flags that this VTF should have.
+	@param {String} format The format that this VTF should use when converted.
+	@param {Object} args Any additional arguments, such as mipmap count.
+
+	@returns {VTF} A new VTF object.
+	@constructor
 */
-
-
 class VTF {
 	constructor(images, flagsum, format='RGBA8888',args={}) {
 		this.images = images
@@ -86,8 +81,18 @@ class VTF {
 		return body
 	}
 
+	/**
+		Creates a Uint8Array of VTF data.
+		@returns {Uint8Array} VTF data.
+	*/
 	export() { return new Uint8Array(this.header.concat(this.body)) }
+
+	/**
+		Creates a Blob of VTF data.
+		@returns {Blob} VTF data.
+	*/
 	blob() { return new Blob([this.export()]) }
+
 
 	encode565(rgb) {
 		return [
@@ -96,7 +101,10 @@ class VTF {
 		]
 	}
 
-	/* Encodes the image data provided into this object's format. */
+	/**
+		Encodes the image data provided into this object's format.
+		@private
+	*/
 	encode(ig) {
 		const data = ig.data
 		// Takes RGBA image data and transforms into the vtf encoding
@@ -178,7 +186,10 @@ class VTF {
 		return out
 	}
 
-	/* Renders the input frame at a size of 0.5**(index-1) and returns the image data. */
+	/**
+		Renders the input frame at a size of 0.5**(index-1) and returns the image data.
+		@private
+	*/
 	getMipmap(index,frame) {
 		var tCanv = document.createElement('CANVAS')
 		tCanv.width = this.images[0].width/(2**(index-1))
@@ -188,7 +199,10 @@ class VTF {
 		return tCtx.getImageData(0,0,tCanv.width,tCanv.height)
 	}
 
-	/* Retrieves the format index for use in the header block. */
+	/**
+		Retrieves the format index for use in the header block.
+		@private
+	*/
 	formatIndex(x) {
 		const formats = {
 			'RGBA8888': 0,
