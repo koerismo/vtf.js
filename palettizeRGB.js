@@ -9,14 +9,10 @@ function palettizeRGB(block) {
 			 Math.round( colorB[2]*mix + colorA[2]*(1-mix) ) ]
 	}
 
-	function colorValue565(rgb) {
+	function RGB565_16bit(rgb) {
 	return  ((rgb[0]<<8) & 0b1111100000000000) |
-		((rgb[1]<<3) & 0b0000011111100000) |
-		((rgb[2]>>3) & 0b0000000000011111)
-	}
-
-	function swapRB(rgb) {
-		return [b,g,r]
+		((rgb[1]<<3 ) & 0b0000011111100000) |
+		((rgb[2]>>3 ) & 0b0000000000011111)
 	}
 
 	// Pick two most contrasting colors
@@ -38,7 +34,7 @@ function palettizeRGB(block) {
 		maxdiff.cB
         ]
 
-	if (colorValue565(maxdiff.cA) <= colorValue565(maxdiff.cB)) { palette = palette.reverse() } // I'm just as confused as you are
+	if (RGB565_16bit(maxdiff.cA) < RGB565_16bit(maxdiff.cB)) { palette = palette.reverse() } // I'm just as confused as you are
 
 
 	var enum_palette = palette.map((val,ind)=>{return [val,ind]})
