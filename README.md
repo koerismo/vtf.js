@@ -15,7 +15,7 @@ Version 2.0 of vtf.js. Rewritten entirely, this version supports the following f
 - IA88
 - DXT1
 
-**Currently only supports VTF v7.3**
+**Currently only supports VTF v7.2**
 
 **WARNING! DXT1 support is currently a work in progress, and currently introduces artifacts into the image! `palettizeRGB.js` must be imported prior to exporting images with the DXT format.**
 
