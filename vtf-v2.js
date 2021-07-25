@@ -39,6 +39,9 @@ Number.prototype.short = function() { return [this & 0xFF, (this >>> 8) & 0xFF] 
 */
 class VTF {
 	constructor(images, flagsum, format='RGBA8888',args={}) {
+		// Throw a less ugly error instead of risking an on-export canvas error.
+		images.forEach((x,y) => { if (x.width <= 0 || x.height <= 0) {throw(`Frame ${y} contains no data! Ensure that the image was preloaded. (Argument 0)`)} })
+
 		this.images = images
 		this.format = format // RGBA8888, RGB888, I8, A8, IA88, DXT1, DXT5
 		this.mipmaps = args.mipmaps||1
@@ -75,8 +78,10 @@ class VTF {
 		var body = []
 		for (let mipmap = this.mipmaps; mipmap > 0; mipmap-=1) { // Mipmaps go from smallest to largest
 			for (let frame = 0; frame < this.images.length; frame++) {
-				body = body.concat( this.encode(this.getMipmap(mipmap,frame)) )
+				// I should have my access to any and all computers revoked because of this.
+				body = body.concat([...this.encode(this.getMipmap(mipmap,frame))])
 			}
+
 		}
 		return body
 	}
@@ -85,7 +90,7 @@ class VTF {
 		Creates a Uint8Array of VTF data.
 		@returns {Uint8Array} VTF data.
 	*/
-	export() { return new Uint8Array(this.header.concat(this.body)) }
+	export() { return new Uint8Array([...this.header, ...this.body]) }
 
 	/**
 		Creates a Blob of VTF data.
@@ -106,34 +111,77 @@ class VTF {
 		@private
 	*/
 	encode(ig) {
-		const data = ig.data
-		// Takes RGBA image data and transforms into the vtf encoding
+		const data = ig.data;
+		var pointer = 0;
+
+		// Int writing functions that vaguely resemble .push()
+		function B8Int(x) { out.setInt8(pointer,x,true); pointer += 8; }
+		function B16Int(x) { out.setInt16(pointer,x,true); pointer += 16; }
+		function RGB8Int(x) { B8Int(x[0]); B8Int(x[1]); B8Int(x[2]); }
+
 		var transform;
+		var pixelLength;
 		switch(this.format) {
 			case 'RGB888':
-				transform = (x)=>{return [ x[0],x[1],x[2] ]}
+				pixelLength = 3 * 8;
+				transform = (x) => {
+					B8Int(x[0]);
+					B8Int(x[1]);
+					B8Int(x[2]);
+				}
 				break;
 			case 'RGBA8888':
-				transform = (x)=>{return [ x[0],x[1],x[2],x[3] ]}
+				pixelLength = 4 * 8;
+				transform = (x) => {
+					B8Int(x[0]);
+					B8Int(x[1]);
+					B8Int(x[2]);
+					B8Int(x[3]);
+				}
 				break;
+			case 'RGBA16161616':
+				pixelLength = 4 * 16;
+				transform = (x) => {
+					B16Int(x[0]);
+					B16Int(x[1]);
+					B16Int(x[2]);
+					B16Int(x[3]);
+				}
 			case 'I8':
-				transform = (x)=>{return [ x[0] ]} /* Use red channel for greyscale */
+				pixelLength = 2 * 8;
+				transform = (x) => {
+					B8Int(x[0]);
+				}
 				break;
 			case 'A8':
-				transform = (x)=>{return [ x[3] ]}
+				pixelLength = 1 * 8;
+				transform = (x) => {
+					B8Int(x[3]);
+				}
 				break;
 			case 'IA88':
-				transform = (x)=>{return [ x[0], x[3] ]}
+				pixelLength = 2 * 8;
+				transform = (x) => {
+					B8Int(x[0]);
+					B8Int(x[3]);
+				}
 				break;
 			case 'RGB565':
-				transform = (x)=>{return this.encode565(x) }
+				pixelLength = 2 * 8;
+				transform = (x) => {
+					const enc_bytes = this.encode565(x)
+					B8Int(enc_bytes[0]);
+					B8Int(enc_bytes[1]);
+				}
 				break;
 			case 'DXT1':
+				// pixelLength = 4 * 4 + 16 * 2;
 				break;
 			default:
 				throw(`Format ${this.format} not recognized!`)
 		}
 
+		// DXT1 case
 		if (this.format === 'DXT1') {
 
 			function getBlock(x,y) { // Retrieves a 4x4 block of pixels starting at x,y
@@ -158,32 +206,37 @@ class VTF {
 				return out
 			}
 
-			var out = []		// TODO: MAKE THIS USE UINT8ARRAY FOR EFFICIENCY
+			var out = new DataView(new ArrayBuffer( 4 * data.length )) // Each group of 16 pixels uses 16b for colours and 32b for indexing.
 			for (var y = 0; y < ig.height; y+=4) {
 				for (var x = 0; x < ig.width; x+=4) {
 					const compressed = palettizeRGB(getBlock(x,y))
-					// Right here, if compressed[0] is inspected, the colours appear to be not corrupted
-					const block_out = [
-						...this.encode565(compressed[0][0]),	// color A
-						...this.encode565(compressed[0][1]),	// color B
-						...compressIndex(compressed[1])		// Compress index into bits
-					]
-					out = out.concat(block_out)
+
+					// Since .encode565 returns 2 bytes, they have to be handled individually.
+					const colA = this.encode565(compressed[0][0])
+					const colB = this.encode565(compressed[0][1])
+
+					RGB8Int(colA[0])	// color A
+					RGB8Int(colA[1])	// color A
+					RGB8Int(colB[0])	// color B
+					RGB8Int(colB[1])	// color B
+					
+					// Compress index into bits
+					compressIndex(compressed[1]).forEach(x => { B8Int(x); })
 				}
 			}
-
 		}
 
-		else {	// uncompressed formats
-			// use the transform function to reorganize image data
-			var out = []
+		// Uncompressed formats
+		else {
+			// Generate new array with predetermined length, then run the transform function for each pixel.
+			var out = new DataView(new ArrayBuffer(pixelLength * data.length))
 			for (let p = 0; p < data.length; p += 4) {
-				let pixelSet = [ data[p], data[p+1], data[p+2], data[p+3] ]
-				out = out.concat(transform( pixelSet ))
+				let pixelSet = [ data[p], data[p+1], data[p+2], data[p+3] ];
+				transform(pixelSet);
 			}
 		}
 
-		return out
+		return new Uint8Array(out.buffer)
 	}
 
 	/**
@@ -213,7 +266,8 @@ class VTF {
 			'A8': 8,
 			'DXT1': 13,
 			'DXT3': 14,
-			'DXT5': 15
+			'DXT5': 15,
+			'RGBA16161616': 25
 		}
 		if (formats[x] != undefined) {return formats[x]}
 		else {return null}
