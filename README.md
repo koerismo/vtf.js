@@ -5,6 +5,8 @@ A javascript library for converting images to the Valve Texture Format
 Version 1.0 of vtf.js. Only supports RGBA8888.
 
 ## vtf-v2.js
+*Special thanks to [@TeamSpen210](https://github.com/TeamSpen210) for helping me develop this!*
+
 Version 2.0 of vtf.js. Rewritten entirely, this version supports the following formats:
 - RGBA16161616
 - RGBA8888
@@ -29,3 +31,4 @@ Version 2.0 of vtf.js. Rewritten entirely, this version supports the following f
 | Firefox | 512 | DXT1 | 1.105 |
 | Firefox | 1024 | RGBA8888 | 4.229 |
 | Firefox | 1024 | DXT1 | 4.464 |
+
