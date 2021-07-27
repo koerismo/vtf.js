@@ -115,8 +115,8 @@ class VTF {
 		var pointer = 0;
 
 		// Int writing functions that vaguely resemble .push()
-		function B8Int(x) { out.setInt8(pointer,x,true); pointer += 8; }
-		function B16Int(x) { out.setInt16(pointer,x,true); pointer += 16; }
+		function B8Int(x) { out.setInt8(pointer,x,true); pointer += 1; }
+		function B16Int(x) { out.setInt16(pointer,x,true); pointer += 2; }
 		function RGB8Int(x) { B8Int(x[0]); B8Int(x[1]); B8Int(x[2]); }
 
 		var transform;
