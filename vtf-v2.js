@@ -76,7 +76,7 @@ class VTF {
 
 	get body() {
 		var body = []
-		for (let mipmap = this.mipmaps; mipmap > 0; mipmap-=1) { // Mipmaps go from smallest to largest
+		for (let mipmap = this.mipmaps; mipmap > 0; mipmap -= 1) { // Mipmaps go from smallest to largest
 			for (let frame = 0; frame < this.images.length; frame++) {
 				// I should have my access to any and all computers revoked because of this.
 				body = body.concat([...this.encode(this.getMipmap(mipmap,frame))])
@@ -115,8 +115,8 @@ class VTF {
 		var pointer = 0;
 
 		// Int writing functions that vaguely resemble .push()
-		function B8Int(x) { out.setInt8(pointer,x,true); pointer += 1; }
-		function B16Int(x) { out.setInt16(pointer,x,true); pointer += 2; }
+		function B8Int(x) { out.setUint8(pointer,x,true); pointer += 1; }
+		function B16Int(x) { out.setUint16(pointer,x,true); pointer += 2; }
 		function RGB8Int(x) { B8Int(x[0]); B8Int(x[1]); B8Int(x[2]); }
 
 		var transform;
@@ -125,17 +125,13 @@ class VTF {
 			case 'RGB888':
 				pixelLength = 3 * 8;
 				transform = (x) => {
-					B8Int(x[0]);
-					B8Int(x[1]);
-					B8Int(x[2]);
+					RGB8Int(x);
 				}
 				break;
 			case 'RGBA8888':
 				pixelLength = 4 * 8;
 				transform = (x) => {
-					B8Int(x[0]);
-					B8Int(x[1]);
-					B8Int(x[2]);
+					RGB8Int(x);
 					B8Int(x[3]);
 				}
 				break;
@@ -148,7 +144,7 @@ class VTF {
 					B16Int(x[3]);
 				}
 			case 'I8':
-				pixelLength = 2 * 8;
+				pixelLength = 1 * 8;
 				transform = (x) => {
 					B8Int(x[0]);
 				}
