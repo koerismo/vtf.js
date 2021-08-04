@@ -1,10 +1,10 @@
 # vtf.js
 A javascript library for converting images to the Valve Texture Format
 
-## vtf.js
+## vtf-legacy.js
 Version 1.0 of vtf.js. Only supports RGBA8888.
 
-## vtf-v2.js
+## vtf.js
 *Special thanks to [@TeamSpen210](https://github.com/TeamSpen210) for helping me develop this!*
 
 Version 2.0 of vtf.js. Rewritten entirely, this version supports the following formats:
