@@ -7,7 +7,7 @@ import * as palettize from './palettizeRGB.js'
 */
 
 
-const VTF_FLAGS = {
+export const VTF_FLAGS = {
 	'point_sampling':		0x0001,	/* Point sampling 			(aka pixel art) */
 	'trilinear_sampling':		0x0002,	/* Trilinear sampling 	(aka mediocre sampling) */
 	'anis_sampling':		0x0004,	/* Anistrophic sampling (aka high-quality sampling) */
@@ -39,7 +39,7 @@ Number.prototype.short = function() { return [this & 0xFF, (this >>> 8) & 0xFF] 
 	@returns {VTF} A new VTF object.
 	@constructor
 */
-class VTF {
+export class VTF {
 	constructor(images, flagsum, format='RGBA8888',args={}) {
 		// Throw a less ugly error instead of risking an on-export canvas error.
 		images.forEach((x,y) => { if (x.width <= 0 || x.height <= 0) {throw(`Frame ${y} contains no data! Ensure that the image was preloaded. (Argument 0)`)} })
@@ -52,27 +52,27 @@ class VTF {
 
 	get header() {
 		return [
-			...'VTF\0'.bytes(),				//  4: Signature
-			7,0,0,0,2,0,0,0,				//  8: Version number
-			64,0,0,0,					//  4: Header size
-			...this.images[0].width.short(),		//  2: Width
-			...this.images[0].height.short(),		//  2: Height
-			...this.flagsum.bytes(4),			//  4: Flags
-			...this.images.length.short(),			//  2: Frame count
-			0,0,						//  2: First frame index
-			0,0,0,0,		// Padding
+			...'VTF\0'.bytes(),							//  4: Signature
+			7,0,0,0,2,0,0,0,							//  8: Version number
+			64,0,0,0,									//  4: Header size
+			...this.images[0].width.short(),			//  2: Width
+			...this.images[0].height.short(),			//  2: Height
+			...this.flagsum.bytes(4),					//  4: Flags
+			...this.images.length.short(),				//  2: Frame count
+			0,0,										//  2: First frame index
+			0,0,0,0,									//  6: Padding
 
-			0,0,0,0,		// 12: Reflectivity vector
+			0,0,0,0,									// 12: Reflectivity vector
 			0,0,0,0,
 			0,0,0,0,
 
-			0,0,0,0,		// Padding
-			0,0,0,0,		//  4: Bumpmap scale
+			0,0,0,0,									//  4: Padding
+			0,0,0,0,									//  4: Bumpmap scale
 			...this.formatIndex(this.format).bytes(4),	//  4: High-res image format ID
-			this.mipmaps,					//  1: Mipmap count
+			this.mipmaps,								//  1: Mipmap count
 			...this.formatIndex('DXT1').bytes(4),		//  4: Low-res image format ID (Always DXT1)
-			0,0,			//  2: Low-res image width/height
-			1			//  1: Largest mipmap depth
+			0,0,										//  2: Low-res image width/height
+			1											//  1: Largest mipmap depth
 		]
 	}
 
