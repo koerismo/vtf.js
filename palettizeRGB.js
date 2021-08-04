@@ -1,4 +1,4 @@
-function palettizeRGB(block) {
+export function palettizeRGB(block) {
 	function colorDiff(colorA,colorB) {
 		return Math.sqrt( (colorB[0] - colorA[0])**2 + (colorB[1]-colorA[1])**2 + (colorB[2]-colorA[2])**2 )
 	}

@@ -1,3 +1,5 @@
+import * as palettize from './palettizeRGB.js'
+
 /**
 	VTF.JS
 	A javascript library to create VTF (Valve Texture Format) files.
@@ -205,7 +207,7 @@ class VTF {
 			var out = new DataView(new ArrayBuffer( 4 * data.length )) // Each group of 16 pixels uses 16b for colours and 32b for indexing.
 			for (var y = 0; y < ig.height; y+=4) {
 				for (var x = 0; x < ig.width; x+=4) {
-					const compressed = palettizeRGB(getBlock(x,y))
+					const compressed = palettize.palettizeRGB(getBlock(x,y))
 
 					// Since .encode565 returns 2 bytes, they have to be handled individually.
 					const colA = this.encode565(compressed[0][0])
