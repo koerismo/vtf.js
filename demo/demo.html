@@ -31,12 +31,28 @@
 			border: 1px solid #444;
 			border-radius: 5px;
 		}
+
+		.multiline-code {
+			background: rgb(28, 28, 29);
+			color: rgba(255, 255, 255, 0.685);
+			font-family: monospace;
+			padding: 5px;
+			border-radius: 5px;
+		}
 		</style>
 	</head>
 	<body>
 		<h3>Upload a file</h3>
 		<p>To use this page, host a local webserver with the root directory set as the one containing this file.</p>
+		<i>Your image will be accessible through the <code>img</code> variable in the console.</i>
 		<input id="inp" type="file">
 		<script type="module" src="demo.js"></script>
+		<p>
+			Code example:<br>
+			<div class="multiline-code">
+				var myVTF = new vtf.VTF( [img], 0, 'RGBA8888' );<br>
+				saveAs( myVTF.blob(), 'myVTF.vtf' );
+			</div>
+		</p>
 	</body>
 </html>

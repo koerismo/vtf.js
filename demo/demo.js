@@ -1,5 +1,6 @@
 /* Import VTF objects. */
-import * as vtf from '../vtf-v2.js';
+import { saveAs } from 'https://cdn.jsdelivr.net/gh/eligrey/FileSaver.js@master/dist/FileSaver.min.js';
+import * as vtf from '../module/vtf.js';
 window.vtf = vtf;
 
 /* Create an image object, and load data into it when files are uploaded. */

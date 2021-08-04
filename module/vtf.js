@@ -1,4 +1,4 @@
-import * as palettize from './palettizeRGB.js'
+import * as palettize from './palettizeRGB.js';
 
 /**
 	VTF.JS
