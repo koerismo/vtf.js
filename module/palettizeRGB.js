@@ -5,14 +5,14 @@ export function palettizeRGB(block) {
 
 	function colorLerp(colorA,colorB,mix) {
 		return [ Math.round( colorB[0]*mix + colorA[0]*(1-mix) ),
-			 Math.round( colorB[1]*mix + colorA[1]*(1-mix) ),
-			 Math.round( colorB[2]*mix + colorA[2]*(1-mix) ) ]
+				 Math.round( colorB[1]*mix + colorA[1]*(1-mix) ),
+				 Math.round( colorB[2]*mix + colorA[2]*(1-mix) ) ]
 	}
 
 	function RGB565_16bit(rgb) {
-	return  ((rgb[0]<<8) & 0b1111100000000000) |
-		((rgb[1]<<3 ) & 0b0000011111100000) |
-		((rgb[2]>>3 ) & 0b0000000000011111)
+	return  ((rgb[0]<<8 ) & 0b1111100000000000) |
+			((rgb[1]<<3 ) & 0b0000011111100000) |
+			((rgb[2]>>3 ) & 0b0000000000011111)
 	}
 
 	// Pick two most contrasting colors

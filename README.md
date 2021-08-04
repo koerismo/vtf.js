@@ -7,6 +7,7 @@ Version 1.0 of vtf.js. Only supports RGBA8888.
 ## vtf.js
 *Special thanks to [@TeamSpen210](https://github.com/TeamSpen210) for helping me develop this!*
 
+
 Version 2.0 of vtf.js. Rewritten entirely, this version supports the following formats:
 - RGBA16161616
 - RGBA8888
@@ -19,7 +20,22 @@ Version 2.0 of vtf.js. Rewritten entirely, this version supports the following f
 
 **Currently only supports VTF v7.2**
 
-**WARNING! DXT1 support is currently a work in progress, and currently introduces artifacts into the image! `palettizeRGB.js` must be imported prior to exporting images with the DXT format.**
+Importing:
+```js
+import { VTF, VTF_FLAGS } from 'https://cdn.jsdelivr.net/gh/koerismo/vtf.js@latest/vtf.js';
+```
+
+Usage:
+```js
+var myImage = new Image();
+myImage.onload = () => {
+	var myVTF = new VTF( [myImage], 0, 'RGBA8888', { mipmaps: 1 } );
+	// Blob data can be retrieved through myVTF.blob()
+}
+myImage.src = ''; // REPLACE THIS WITH A DATA URL
+```
+
+**WARNING! DXT1 support is currently a work in progress, and currently introduces artifacts into the image!**
 
 ### Write Speeds
 ##### *Tested on Apple M1 CPU, 16gb RAM. Note: More extensive testing has yet to be done!*
