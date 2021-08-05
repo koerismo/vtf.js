@@ -9,14 +9,14 @@ import * as palettize from './palettizeRGB.js';
 
 export const VTF_FLAGS = {
 	'point_sampling':		0x0001,	/* Point sampling 			(aka pixel art) */
-	'trilinear_sampling':		0x0002,	/* Trilinear sampling 	(aka mediocre sampling) */
-	'anis_sampling':		0x0004,	/* Anistrophic sampling (aka high-quality sampling) */
-	'clamp_s': 			0x0008,	/* Prevent tiling on S */
-	'clamp_t': 			0x0010,	/* Prevent tiling on T */
+	'trilinear_sampling':	0x0002,	/* Trilinear sampling 		(aka mediocre sampling) */
+	'anis_sampling':		0x0004,	/* Anistrophic sampling 	(aka high-quality sampling) */
+	'clamp_s': 				0x0008,	/* Prevent tiling on S */
+	'clamp_t': 				0x0010,	/* Prevent tiling on T */
 	'hint_dxt5':			0x0020,	/* Used for skyboxes */
 	'normalmap':			0x0080,	/* Whether the texture is a normal map. */
 	'no_mipmaps':			0x0100,	/* Disables Mipmaps */
-	'no_lod': 			0x0200,	/* No Level Of Detail */
+	'no_lod': 				0x0200,	/* No Level Of Detail */
 	'one_bit_alpha':		0x0400,	/* One-bit alpha */
 	'eight_bit_alpha':		0x0800,	/* Eight-bit alpha */
 }
