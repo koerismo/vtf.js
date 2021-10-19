@@ -168,7 +168,7 @@ export class VTF {
 		for (byte = 0; byte < header.length; byte++)	out[byte] = header[byte]
 		for (byte = 0; byte < body.length; byte++)		out[byte+header.length] = body[byte]
 		
-		return new Blob( out );
+		return new Blob( [out] );
 	}
 
 }
