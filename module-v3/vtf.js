@@ -1,3 +1,5 @@
+import './encode.js';
+
 /**
  * @author Koerismo
  * @description A javascript library to create VTF (Valve Texture Format) files.
@@ -20,6 +22,7 @@ export const VTF_FLAGS = {
 
 export class EncodingHandler {
 	static encode( data, format ) {
+		
 		var bpp = 0;
 		var cursor = 0;
 		var transform, view;
@@ -41,19 +44,18 @@ export class EncodingHandler {
 		}
 
 		// Simple input validity error checks.
-		if (bpp == 0)					throw(`Format ${format} not recognized by EncodingHandler!`);
-		if ((data.length/4) % 1 != 0)	throw('Image data is incomplete! (Must follow [r,g,b,a,r,g,b,a...].)');
+		if (bpp == 0)						throw(`Format ${format} not recognized by EncodingHandler!`);
+		if ((data.data.length/4) % 1 != 0)	throw('Image data is incomplete! (Must follow [r,g,b,a,r,g,b,a...].)');
 
-		view = new DataView( new ArrayBuffer(bpp * data.length) );
+		view = new DataView( new ArrayBuffer(bpp * data.data.length) );
 
 		// Write data.
-		for (let ind = 0; ind < data.length; ind++) {
-			if ( ind%4 == 0 )
-				transform( data[ind], data[ind+1], data[ind+2], data[ind+3] )
+		for (let ind = 0; ind < data.data.length; ind++) {
+			if ( ind%4 == 0 ) transform( data.data[ind], data.data[ind+1], data.data[ind+2], data.data[ind+3] )
 		}
 
 		// Return data as a Uint8Array.
-		return new Uint8Array(view.buffer)
+		return new Uint8Array( view.buffer );
 	}
 
 	static index( format ) {
@@ -89,7 +91,7 @@ export class VTF {
 
 	__mipmap__( frameID, mipmapID ) {
 		// Create a canvas, resize to mipmap size.
-		const canvas  = document.createElement('CANV');
+		const canvas  = document.createElement('CANVAS');
 		canvas.width  = this.frames[0].width  / ( 2**(mipmapID-1) )
 		canvas.height = this.frames[0].height / ( 2**(mipmapID-1) )
 		
@@ -131,13 +133,36 @@ export class VTF {
 	}
 
 	__header__( versionMajor=7, versionMinor=5 ) {
-		return []
+		// THIS IS TEMPORARY UNTIL I REDO HEADER GENERATION!!
+		return [
+			...'VTF\0'.bytes(),								//  4: Signature
+			7,0,0,0,2,0,0,0,								//  8: Version number
+			64,0,0,0,										//  4: Header size
+			...this.frames[0].width.short(),				//  2: Width
+			...this.frames[0].height.short(),				//  2: Height
+			...this.__flagsum__().bytes(4),					//  4: Flags
+			...this.flags.length.short(),					//  2: Frame count
+			0,0,											//  2: First frame index
+			0,0,0,0,										//  6: Padding
+
+			0,0,0,0,										// 12: Reflectivity vector
+			0,0,0,0,
+			0,0,0,0,
+
+			0,0,0,0,										//  4: Padding
+			0,0,0,0,										//  4: Bumpmap scale
+			...EncodingHandler.index(this.format).bytes(4),	//  4: High-res image format ID
+			this.mipmaps,									//  1: Mipmap count
+			...EncodingHandler.index('DXT1').bytes(4),		//  4: Low-res image format ID (Always DXT1)
+			0,0,											//  2: Low-res image width/height
+			1												//  1: Largest mipmap depth
+		]
 	}
 
 	blob() {
 		const body = this.__body__();
 		const header = this.__header__();
-		const out = Uint8Array( header.length + body.length );
+		const out = new Uint8Array( header.length + body.length );
 
 		var byte;
 		for (byte = 0; byte < header.length; byte++)	out[byte] = header[byte]
@@ -146,4 +171,4 @@ export class VTF {
 		return new Blob( out );
 	}
 
-}``
+}

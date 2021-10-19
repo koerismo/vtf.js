@@ -1,15 +1,16 @@
 /* Import module objects. */
 import { saveAs } from "https://cdn.skypack.dev/save-as@0.1.8";
-import { VTF, VTF_FLAGS } from '../module/vtf.js';
+import { VTF, VTF_FLAGS, EncodingHandler } from '../module-v3/vtf.js';
 
 /* Reveal module imports to console. Don't do this in production! */
 window.saveAs = saveAs;
 window.VTF = VTF;
 window.VTF_FLAGS = VTF_FLAGS;
+window.EncodingHandler = EncodingHandler;
 
 /* Create an image object, and load data into it when files are uploaded. */
 const i = document.querySelector('#inp');
-const img = new Image();
+window.img = new Image();
 document.body.appendChild(img);
 i.oninput = () => {
 	const fr = new FileReader();
