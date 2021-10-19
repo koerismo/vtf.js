@@ -1,0 +1,1 @@
+String.prototype.bytes = function() { return new TextEncoder.encode(this) }
