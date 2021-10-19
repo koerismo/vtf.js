@@ -1,5 +1,3 @@
-import { VTF_FLAGS } from "../module/vtf.js";
-
 /**
  * @author Koerismo
  * @description A javascript library to create VTF (Valve Texture Format) files.
@@ -20,7 +18,7 @@ export const VTF_FLAGS = {
 	'eight_bit_alpha':		0x0800,	/* Eight-bit alpha */
 }
 
-export class ImageEncoder {
+export class EncodingHandler {
 	static encode( data, format ) {
 		var bpp = 0;
 		var cursor = 0;
@@ -43,7 +41,7 @@ export class ImageEncoder {
 		}
 
 		// Simple input validity error checks.
-		if (bpp == 0)					throw(`Format ${format} not recognized by ImageEncoder!`);
+		if (bpp == 0)					throw(`Format ${format} not recognized by EncodingHandler!`);
 		if ((data.length/4) % 1 != 0)	throw('Image data is incomplete! (Must follow [r,g,b,a,r,g,b,a...].)');
 
 		view = new DataView( new ArrayBuffer(bpp * data.length) );
@@ -56,6 +54,24 @@ export class ImageEncoder {
 
 		// Return data as a Uint8Array.
 		return new Uint8Array(view.buffer)
+	}
+
+	static index( format ) {
+		// Attempt to match the provided format.
+		switch(format) {
+			case 'RGBA8888':	return 0;
+			case 'RGB888':		return 2;
+			case 'RGB565':		return 4;
+			case 'I8':			return 5;
+			case 'IA88':		return 6;
+			case 'A8':			return 8;
+			case 'DXT1':		return 13;
+			case 'DXT3':		return 14;
+			case 'DXT5':		return 15;
+		}
+
+		// In the case that no formats match.
+		throw(`Format ${format} not recognized by EncodingHandler!`);
 	}
 }
 
@@ -80,7 +96,7 @@ export class VTF {
 		// Write image.
 		const ctx = canvas.getContext('2d')
 		ctx.drawImage( this.frames[frameID], 0, 0, canvas.width, canvas.height )
-		return ImageEncoder.encode( ctx.getImageData( 0, 0, canvas.width, canvas.height ), this.format )
+		return EncodingHandler.encode( ctx.getImageData( 0, 0, canvas.width, canvas.height ), this.format )
 	}
 
 	__flagsum__() {
@@ -92,7 +108,6 @@ export class VTF {
 	}
 
 	__body__( mipmapCount=1 ) {
-
 		// Create an array of mipmaps.
 		var mipmaps = []
 		for (let mip = mipmapCount; mip > 0; mip--)
@@ -116,7 +131,19 @@ export class VTF {
 	}
 
 	__header__( versionMajor=7, versionMinor=5 ) {
-
+		return []
 	}
 
-}
+	blob() {
+		const body = this.__body__();
+		const header = this.__header__();
+		const out = Uint8Array( header.length + body.length );
+
+		var byte;
+		for (byte = 0; byte < header.length; byte++)	out[byte] = header[byte]
+		for (byte = 0; byte < body.length; byte++)		out[byte+header.length] = body[byte]
+		
+		return new Blob( out );
+	}
+
+}``
