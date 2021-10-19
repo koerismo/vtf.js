@@ -78,15 +78,16 @@ export class EncodingHandler {
 }
 
 export class VTF {
-	constructor( frames, format, flags ) {
+	constructor( frames, format, flags=[], mipmaps=1 ) {
 
 		// Check validity of provided frames.
 		frames.forEach( (frame, ind) => { if (frame.x == 0 || frame.height == 0) { throw(`Frame ${ind} is invalid!`) }} );
 
 		// Write vars.
-		this.frames = frames;
-		this.format = format;
-		this.flags  = flags;
+		this.frames  = frames;
+		this.format  = format;
+		this.flags   = flags;
+		this.mipmaps = mipmaps;
 	}
 
 	__mipmap__( frameID, mipmapID ) {
@@ -152,7 +153,7 @@ export class VTF {
 			0,0,0,0,										//  4: Padding
 			0,0,0,0,										//  4: Bumpmap scale
 			...EncodingHandler.index(this.format).bytes(4),	//  4: High-res image format ID
-			this.mipmaps,									//  1: Mipmap count
+			this.mipmaps.bytes(1),							//  1: Mipmap count
 			...EncodingHandler.index('DXT1').bytes(4),		//  4: Low-res image format ID (Always DXT1)
 			0,0,											//  2: Low-res image width/height
 			1												//  1: Largest mipmap depth
