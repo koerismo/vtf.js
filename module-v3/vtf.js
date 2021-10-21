@@ -21,6 +21,7 @@ export const VTF_FLAGS = {
 }
 
 export class EncodingHandler {
+	/* Handles the re-encoding of uncompressed formats. */
 	static encode( data, format ) {
 		
 		var bpp = 0;
@@ -41,6 +42,21 @@ export class EncodingHandler {
 				bpp = 32 / 32;
 				transform = (r,g,b,a) => { addUint8(r); addUint8(g); addUint8(b); addUint8(a); }
 				break;
+			case 'RGB565':
+				bpp = 16 / 32;
+				transform = (r,g,b,a) => {
+					addUint8( (g << 3) & 0b11100000 | (b >> 3) );
+					addUint8( (r & 0b11111000) | (b >> 5) );
+				}
+				break;
+			case 'I8':
+				bpp = 8 / 32;
+				transform = (r,g,b,a) => { addUint8(r); }
+				break;
+			case 'A8':
+				bpp = 8 / 32;
+				transform = (r,g,b,a) => { addUint8(a); }
+				break;
 		}
 
 		// Simple input validity error checks.
@@ -58,6 +74,27 @@ export class EncodingHandler {
 		return new Uint8Array( view.buffer );
 	}
 
+	/* Averages the colour of all pixels in rgba data provideed. */
+	static average( data ) {
+		const avg = {r: 0, g: 0, b: 0}
+		for (var i = 0; i < data.length; i+=4 ) {
+			avg.r += data[i]
+			avg.g += data[i+1]
+			avg.b += data[i+2]
+		}
+		return [ avg.r/data.length*4, avg.g/data.length*4, avg.b/data.length*4 ]
+	}
+
+	/* Handles DXT compression. */
+	static encodeDXT( data, format ) {
+		return 0
+	}
+
+	static __dxtblock__( datablock ) {
+		return 0
+	}
+
+	/* Retrieves the index of the format provided. */
 	static index( format ) {
 		// Attempt to match the provided format.
 		switch(format) {
@@ -78,7 +115,7 @@ export class EncodingHandler {
 }
 
 export class VTF {
-	constructor( frames, format, flags=[], mipmaps=1 ) {
+	constructor( frames, format, flags=[], mipmaps=1, version=1 ) {
 
 		// Check validity of provided frames.
 		frames.forEach( (frame, ind) => { if (frame.x == 0 || frame.height == 0) { throw(`Frame ${ind} is invalid!`) }} );
@@ -88,6 +125,7 @@ export class VTF {
 		this.format  = format;
 		this.flags   = flags;
 		this.mipmaps = mipmaps;
+		this.version = version;
 	}
 
 	__mipmap__( frameID, mipmapID ) {
@@ -133,31 +171,71 @@ export class VTF {
 		return body;
 	}
 
-	__header__( versionMajor=7, versionMinor=5 ) {
-		// THIS IS TEMPORARY UNTIL I REDO HEADER GENERATION!!
-		return [
-			...'VTF\0'.bytes(),								//  4: Signature
-			7,0,0,0,2,0,0,0,								//  8: Version number
-			64,0,0,0,										//  4: Header size
-			...this.frames[0].width.short(),				//  2: Width
-			...this.frames[0].height.short(),				//  2: Height
-			...this.__flagsum__().bytes(4),					//  4: Flags
-			...this.flags.length.short(),					//  2: Frame count
-			0,0,											//  2: First frame index
-			0,0,0,0,										//  6: Padding
+	__header__() {
 
-			0,0,0,0,										// 12: Reflectivity vector
-			0,0,0,0,
-			0,0,0,0,
+		// TODO: NONE OF THE LENGTHS ON THESE THINGS ARE CORRECT!!
 
-			0,0,0,0,										//  4: Padding
-			0,0,0,0,										//  4: Bumpmap scale
-			...EncodingHandler.index(this.format).bytes(4),	//  4: High-res image format ID
-			this.mipmaps.bytes(1),							//  1: Mipmap count
-			...EncodingHandler.index('DXT1').bytes(4),		//  4: Low-res image format ID (Always DXT1)
-			0,0,											//  2: Low-res image width/height
-			1												//  1: Largest mipmap depth
-		]
+		const pixelAvg = EncodingHandler.average( this.frames[0].data.data )
+
+		if ( this.version >= 3 ) { //				7.3+
+			throw('7.3+ is not supported at the moment!')
+			return [
+
+			]
+		}
+		else if ( this.version >= 2 ) { //			7.2+
+			return [
+				...'VTF\0'.bytes(),								//  0  4b: Signature
+				7,0,0,0,										//  4  8b: Version number
+				...this.version.bytes(4),
+				65,0,0,0,										// 12  4b: Header size
+				...this.frames[0].width.short(),				// 16  2b: Width
+				...this.frames[0].height.short(),				// 18  2b: Height
+				...this.__flagsum__().bytes(4),					// 20  4b: Flags
+				...this.flags.length.short(),					// 24  2b: Frame count
+				0,0,											// 26  2b: First frame index
+				0,0,0,0,										// 28  4b: Padding
+
+				...pixelAvg[0].float(4),						// 32 12b: Reflectivity vector
+				...pixelAvg[1].float(4),
+				...pixelAvg[2].float(4),
+
+				0,0,0,0,										// 44  4b: Padding
+				0,0,0,0,										// 48  4b: Bumpmap scale
+				...EncodingHandler.index(this.format).bytes(4),	// 52  4b: High-res image format ID
+				this.mipmaps.bytes(1),							// 56  1b: Mipmap count
+				...EncodingHandler.index('DXT1').bytes(4),		// 57  4b: Low-res image format ID (Always DXT1)
+				0,0,											// 61  2b: Low-res image width/height
+				1,0												// 63  2b: Largest mipmap depth
+																// 65
+			]
+		}
+		else { //									7.1 and under
+			return [
+				...'VTF\0'.bytes(),								//  0 4b: Signature
+				7,0,0,0,										//  4 8b: Version number
+				...this.version.bytes(4),
+				63,0,0,0,										// 12 4b: Header size
+				...this.frames[0].width.short(),				// 16 2b: Width
+				...this.frames[0].height.short(),				// 18 2b: Height
+				...this.__flagsum__().bytes(4),					// 20 4b: Flags
+				...this.frames.length.short(),					// 24 2b: Frame count
+				0,0,											// 26 2b: First frame index
+				0,0,0,0,										// 28 4b: Padding
+
+				...pixelAvg[0].float(4),						// 32 12b: Reflectivity vector
+				...pixelAvg[1].float(4),
+				...pixelAvg[2].float(4),
+
+				0,0,0,0,										// 44 4b: Padding
+				0,0,0,0,										// 48 4b: Bumpmap scale
+				...EncodingHandler.index(this.format).bytes(4),	// 52 4b: High-res image format ID
+				this.mipmaps.bytes(1),							// 56 1b: Mipmap count
+				...EncodingHandler.index('DXT1').bytes(4),		// 57 4b: Low-res image format ID (Always DXT1)
+				0,0												// 61 2b: Low-res image width/height
+																// 63
+			]
+		}
 	}
 
 	blob() {
