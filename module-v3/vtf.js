@@ -149,6 +149,9 @@ export class VTF {
 	}
 
 	__body__( mipmapCount=1 ) {
+
+		// TODO: Fix mipmaps causing problems.
+
 		// Create an array of mipmaps.
 		var mipmaps = []
 		for (let mip = mipmapCount; mip > 0; mip--)
@@ -173,14 +176,37 @@ export class VTF {
 
 	__header__() {
 
-		// TODO: NONE OF THE LENGTHS ON THESE THINGS ARE CORRECT!!
+		// TODO: Fix v7.2 VTFs causing vtfedit to hang!
+		// TODO: Finish 7.3+
 
 		const pixelAvg = EncodingHandler.average( this.frames[0].data.data )
 
 		if ( this.version >= 3 ) { //				7.3+
 			throw('7.3+ is not supported at the moment!')
 			return [
+				...'VTF\0'.bytes(),								//  0  4b: Signature
+				7,0,0,0,										//  4  8b: Version number
+				...this.version.bytes(4),
+				65,0,0,0,										// 12  4b: Header size
+				...this.frames[0].width.short(),				// 16  2b: Width
+				...this.frames[0].height.short(),				// 18  2b: Height
+				...this.__flagsum__().bytes(4),					// 20  4b: Flags
+				...this.flags.length.short(),					// 24  2b: Frame count
+				0,0,											// 26  2b: First frame index
+				0,0,0,0,										// 28  4b: Padding
 
+				...pixelAvg[0].float(4),						// 32 12b: Reflectivity vector
+				...pixelAvg[1].float(4),
+				...pixelAvg[2].float(4),
+
+				0,0,0,0,										// 44  4b: Padding
+				0,0,0,0,										// 48  4b: Bumpmap scale
+				...EncodingHandler.index(this.format).bytes(4),	// 52  4b: High-res image format ID
+				this.mipmaps.bytes(1),							// 56  1b: Mipmap count
+				...EncodingHandler.index('DXT1').bytes(4),		// 57  4b: Low-res image format ID (Always DXT1)
+				0,0,											// 61  2b: Low-res image width/height
+				1,0												// 63  2b: Largest mipmap depth
+																// 65
 			]
 		}
 		else if ( this.version >= 2 ) { //			7.2+
