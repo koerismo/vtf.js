@@ -137,7 +137,7 @@ export class VTF {
 		// Write image.
 		const ctx = canvas.getContext('2d')
 		ctx.drawImage( this.frames[frameID], 0, 0, canvas.width, canvas.height )
-		return EncodingHandler.encode( ctx.getImageData( 0, 0, canvas.width, canvas.height ), this.format )
+		return ctx.getImageData( 0, 0, canvas.width, canvas.height )
 	}
 
 	__flagsum__() {
@@ -156,7 +156,7 @@ export class VTF {
 		var mipmaps = []
 		for (let mip = mipmapCount; mip > 0; mip--)
 			for (let frame = 0; frame < this.frames.length; frame++)
-				mipmaps.push(this.__mipmap__( frame, mip ))
+				mipmaps.push( EncodingHandler.encode(this.__mipmap__(frame, mip), this.format) )
 
 		// Determine length of output and create output target.
 		const bodyLength = mipmaps.reduce( (a,b) => (a + b.length), 0 )
@@ -179,7 +179,7 @@ export class VTF {
 		// TODO: Fix v7.2 VTFs causing vtfedit to hang!
 		// TODO: Finish 7.3+
 
-		const pixelAvg = EncodingHandler.average( this.frames[0].data.data )
+		const pixelAvg = EncodingHandler.average( this.__mipmap__(0, 1) )
 
 		if ( this.version >= 3 ) { //				7.3+
 			throw('7.3+ is not supported at the moment!')
