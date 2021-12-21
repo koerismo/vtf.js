@@ -213,10 +213,10 @@ export class VTF {
 					const colA = this.encode565(compressed[0][0])
 					const colB = this.encode565(compressed[0][1])
 
-					RGB8Int(colA[0])	// color A
-					RGB8Int(colA[1])	// color A
-					RGB8Int(colB[0])	// color B
-					RGB8Int(colB[1])	// color B
+					B8Int(colA[0])	// color A
+					B8Int(colA[1])	// color A
+					B8Int(colB[0])	// color B
+					B8Int(colB[1])	// color B
 					
 					// Compress index into bits
 					compressIndex(compressed[1]).forEach(x => { B8Int(x); })

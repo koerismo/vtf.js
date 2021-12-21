@@ -17,6 +17,8 @@ i.oninput = () => {
 	fr.readAsDataURL(i.files[0]);
 }
 
+window.img = img;
+
 /*
 	All of the elements from the library are duplicated into
 	the window.vtf object, which can be accessed from the console.
