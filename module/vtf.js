@@ -69,7 +69,7 @@ export class VTF {
 			0,0,0,0,									//  4: Padding
 			0,0,0,0,									//  4: Bumpmap scale
 			...this.formatIndex(this.format).bytes(4),	//  4: High-res image format ID
-			this.mipmaps,								//  1: Mipmap count
+			this.mipmaps.bytes(1),						//  1: Mipmap count
 			...this.formatIndex('DXT1').bytes(4),		//  4: Low-res image format ID (Always DXT1)
 			0,0,										//  2: Low-res image width/height
 			1											//  1: Largest mipmap depth
@@ -77,15 +77,27 @@ export class VTF {
 	}
 
 	get body() {
-		var body = []
-		for (let mipmap = this.mipmaps; mipmap > 0; mipmap -= 1) { // Mipmaps go from smallest to largest
-			for (let frame = 0; frame < this.images.length; frame++) {
-				// I should have my access to any and all computers revoked because of this.
-				body = body.concat([...this.encode(this.getMipmap(mipmap,frame))])
-			}
 
+		// Get list of mipmaps from smallest to largest.
+		const mipmaps = [];
+		for (let mip = this.mipmaps; mip > 0; mip -= 1)
+			for (let frame = 0; frame < this.images.length; frame++)
+				mipmaps.push( this.encode(this.getMipmap(mip,frame)) );
+
+		// Create output array.
+		const len = mipmaps.reduce( (a,b) => (a + b.length), 0 );
+		const body = new Uint8Array( len );
+
+		// Move data into output array.
+		var ind = 0;
+		for (let item in mipmaps) {
+			for (let byte in mipmaps[item]) {
+				body[ind] = mipmaps[item][byte];
+				ind += 1;
+			}
 		}
-		return body
+
+		return body;
 	}
 
 	/**
@@ -102,6 +114,11 @@ export class VTF {
 
 
 	encode565(rgb) {
+		return (
+			((rgb[1] << 11) & 0b1111100000000000) |
+			((rgb[1] <<  5) & 0b0000011111100000) |
+			((rgb[2] <<  0) & 0b0000000000011111)
+		)
 		return [
 			(rgb[1] << 3) & 0b11100000 | (rgb[2] >> 3),
 			(rgb[0] & 0b11111000) | (rgb[1] >> 5)
@@ -115,6 +132,7 @@ export class VTF {
 	encode(ig) {
 		const data = ig.data;
 		var pointer = 0;
+		var out;
 
 		// Int writing functions that vaguely resemble .push()
 		function B8Int(x) { out.setUint8(pointer,x,true); pointer += 1; }
@@ -137,7 +155,7 @@ export class VTF {
 					B8Int(x[3]);
 				}
 				break;
-			case 'RGBA16161616':
+			case 'RGBA16161616':		// NOTE: DOES NOT WORK. TODO: FIX THIS.
 				pixelLength = 4 * 16;
 				transform = (x) => {
 					B16Int(x[0]);
@@ -167,13 +185,11 @@ export class VTF {
 			case 'RGB565':
 				pixelLength = 2 * 8;
 				transform = (x) => {
-					const enc_bytes = this.encode565(x)
-					B8Int(enc_bytes[0]);
-					B8Int(enc_bytes[1]);
+					B16Int(this.encode565(x));
 				}
 				break;
 			case 'DXT1':
-				// pixelLength = 4 * 4 + 16 * 2;
+				// pixelLength = 4 * 4 * 2 + 16 * 2;
 				break;
 			default:
 				throw(`Format ${this.format} not recognized!`)
@@ -204,7 +220,7 @@ export class VTF {
 				return out
 			}
 
-			var out = new DataView(new ArrayBuffer( 4 * data.length )) // Each group of 16 pixels uses 16b for colours and 32b for indexing.
+			out = new DataView(new ArrayBuffer( 4 * data.length / 4 )) // Each group of 16 pixels uses 32 bits for colours and 32 bits for indexing.
 			for (var y = 0; y < ig.height; y+=4) {
 				for (var x = 0; x < ig.width; x+=4) {
 					const compressed = palettize.palettizeRGB(getBlock(x,y))
@@ -213,10 +229,8 @@ export class VTF {
 					const colA = this.encode565(compressed[0][0])
 					const colB = this.encode565(compressed[0][1])
 
-					B8Int(colA[0])	// color A
-					B8Int(colA[1])	// color A
-					B8Int(colB[0])	// color B
-					B8Int(colB[1])	// color B
+					B16Int(colA)	// color A
+					B16Int(colB)	// color B
 					
 					// Compress index into bits
 					compressIndex(compressed[1]).forEach(x => { B8Int(x); })
@@ -227,7 +241,7 @@ export class VTF {
 		// Uncompressed formats
 		else {
 			// Generate new array with predetermined length, then run the transform function for each pixel.
-			var out = new DataView(new ArrayBuffer(pixelLength * data.length))
+			out = new DataView(new ArrayBuffer( pixelLength * data.length / 4 / 8 ))
 			for (let p = 0; p < data.length; p += 4) {
 				let pixelSet = [ data[p], data[p+1], data[p+2], data[p+3] ];
 				transform(pixelSet);
