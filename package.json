@@ -1,0 +1,18 @@
+{
+  "name": "vtf.ts",
+  "version": "1.0.0",
+  "description": "A typescript/javascript library for reading/writing with the Valve Texture Format.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koerismo/vtf.js.git"
+  },
+  "author": "Koerismo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/koerismo/vtf.js/issues"
+  },
+  "homepage": "https://github.com/koerismo/vtf.js#readme",
+  "devDependencies": {
+    "typescript": "^4.5.4"
+  }
+}

@@ -1,28 +1,20 @@
 /* Import module objects. */
 import { saveAs } from "https://cdn.skypack.dev/save-as@0.1.8";
-import { VTF, VTF_FLAGS, EncodingHandler } from '../module-v3/vtf.js';
+import { Vtf, Frame, VtfImageResource } from '../dist/module/VtfContainer.js';
+import "./../dist/module/Main.js";
 
 /* Reveal module imports to console. Don't do this in production! */
-window.saveAs = saveAs;
-window.VTF = VTF;
-window.VTF_FLAGS = VTF_FLAGS;
-window.EncodingHandler = EncodingHandler;
+globalThis.saveAs = saveAs;
+globalThis.Vtf = Vtf;
+globalThis.Frame = Frame;
+globalThis.VtfImageResource = VtfImageResource;
 
 /* Create an image object, and load data into it when files are uploaded. */
 const i = document.querySelector('#inp');
-window.img = new Image();
+globalThis.img = new Image();
 document.body.appendChild(img);
 i.oninput = () => {
 	const fr = new FileReader();
 	fr.onload = () => { img.src = fr.result; }
 	fr.readAsDataURL(i.files[0]);
 }
-
-/*
-	All of the elements from the library are duplicated into
-	the window.vtf object, which can be accessed from the console.
-
-	Example: (Be sure to upload an image prior to running this)
-	var myVTF = new VTF( [img], VTF_FLAGS.anis_sampling, 'RGBA8888' )
-	saveAs( myVTF.blob(), 'myVTF.vtf' )
-*/

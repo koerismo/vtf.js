@@ -1,0 +1,8 @@
+{
+	"compilerOptions": {
+		"module": "ES2015",
+		"rootDir": "src",
+		"outDir": "dist"
+	},
+	"include": ["src/module/*"]
+}
