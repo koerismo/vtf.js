@@ -96,8 +96,6 @@ export class VtfDxtEncodings {
 			for ( var block = 0; block < grouped.length; block++ ) {
 				const [ indexed, paletteA, paletteB ] = VtfDxtEncodings.palettizeBlock( grouped[block] );
 
-				console.log( indexed, paletteA, paletteB )
-
 				for ( var i = 0; i < indexed.length; i += 4 ) {
 					target.setInt8( pointer, (
 						(indexed[i+3] >> 0 & 0b11000000) |
