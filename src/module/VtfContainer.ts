@@ -23,10 +23,10 @@ export class Vtf {
 
 	/* Dynamic Component */
 
-	private size: Array<number>;
 	private version: Array<number>;
 	private flags: number;
 	private resources: Array<VtfResource>;
+	public size: Array<number>;
 	public  format: string;
 	public  mipmaps: number;
 
@@ -52,15 +52,15 @@ export class Vtf {
 
 	private checkErrors() {
 		if ( Math.log2(this.size[0])%1 > 0 || Math.log2(this.size[1])%1 > 0 ) {
-			throw( `SizeError: VTF initiated with non-power of two size (${this.size[0]}x${this.size[1]})` );
+			throw( `SizeError: VTF has non-power of two size (${this.size[0]}x${this.size[1]})` );
 		}
 
 		if ( !(this.format in Vtf.codecs) ) {
-			throw( `ValueError: VTF initiated with unknown format "${this.format}"` );
+			throw( `ValueError: VTF using unknown format "${this.format}"` );
 		}
 
 		if ( this.version[0] != 7 || this.version[1] < 3 || this.version[1] > 5 ) {
-			throw( `ValueError: VTF initialized with unsupported version (${this.version[0]}.${this.version[1]})`);
+			throw( `ValueError: VTF using unsupported version (${this.version[0]}.${this.version[1]})`);
 		}
 	}
 
@@ -150,10 +150,10 @@ export class Frame {
 		this.image = image;
 	}
 
-	mipmap( depth: number ): ImageData {
+	mipmap( vtf: Vtf, depth: number ): ImageData {
 		const canvas  = document.createElement( 'canvas' );
-		canvas.width  = this.image.width / ( 2**(depth-1) );
-		canvas.height = this.image.height / ( 2**(depth-1) );
+		canvas.width  = vtf.size[0] / ( 2**(depth-1) );
+		canvas.height = vtf.size[1] / ( 2**(depth-1) );
 
 		const context = canvas.getContext( '2d' );
 		context.drawImage( this.image, 0, 0, canvas.width, canvas.height );
@@ -216,7 +216,7 @@ export class VtfImageResource extends VtfResource {
 		for ( var mipIndex = vtf.mipmaps; mipIndex > 0; mipIndex-- ) {
 			for ( var frameIndex = 0; frameIndex < this.frames.length; frameIndex++ ) {
 
-				const mip = this.frames[frameIndex].mipmap( mipIndex );
+				const mip = this.frames[frameIndex].mipmap( vtf, mipIndex );
 				raw[rawPointer] = Vtf.codecs[vtf.format].encode(mip);
 				rawPointer += 1;
 			}

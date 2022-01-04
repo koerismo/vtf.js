@@ -54,13 +54,13 @@ var Vtf = /** @class */ (function () {
     };
     Vtf.prototype.checkErrors = function () {
         if (Math.log2(this.size[0]) % 1 > 0 || Math.log2(this.size[1]) % 1 > 0) {
-            throw ("SizeError: VTF initiated with non-power of two size (".concat(this.size[0], "x").concat(this.size[1], ")"));
+            throw ("SizeError: VTF has non-power of two size (".concat(this.size[0], "x").concat(this.size[1], ")"));
         }
         if (!(this.format in Vtf.codecs)) {
-            throw ("ValueError: VTF initiated with unknown format \"".concat(this.format, "\""));
+            throw ("ValueError: VTF using unknown format \"".concat(this.format, "\""));
         }
         if (this.version[0] != 7 || this.version[1] < 3 || this.version[1] > 5) {
-            throw ("ValueError: VTF initialized with unsupported version (".concat(this.version[0], ".").concat(this.version[1], ")"));
+            throw ("ValueError: VTF using unsupported version (".concat(this.version[0], ".").concat(this.version[1], ")"));
         }
     };
     Vtf.prototype.header = function () {
@@ -132,11 +132,10 @@ var Frame = /** @class */ (function () {
     function Frame(image) {
         this.image = image;
     }
-    Frame.prototype.mipmap = function (depth) {
+    Frame.prototype.mipmap = function (vtf, depth) {
         var canvas = document.createElement('canvas');
-        document.body.appendChild(canvas)
-        canvas.width = this.image.width / (Math.pow(2, (depth - 1)));
-        canvas.height = this.image.height / (Math.pow(2, (depth - 1)));
+        canvas.width = vtf.size[0] / (Math.pow(2, (depth - 1)));
+        canvas.height = vtf.size[1] / (Math.pow(2, (depth - 1)));
         var context = canvas.getContext('2d');
         context.drawImage(this.image, 0, 0, canvas.width, canvas.height);
         return context.getImageData(0, 0, canvas.width, canvas.height);
@@ -183,7 +182,7 @@ var VtfImageResource = /** @class */ (function (_super) {
         var rawPointer = 0;
         for (var mipIndex = vtf.mipmaps; mipIndex > 0; mipIndex--) {
             for (var frameIndex = 0; frameIndex < this.frames.length; frameIndex++) {
-                var mip = this.frames[frameIndex].mipmap(mipIndex);
+                var mip = this.frames[frameIndex].mipmap(vtf, mipIndex);
                 raw[rawPointer] = Vtf.codecs[vtf.format].encode(mip);
                 rawPointer += 1;
             }
