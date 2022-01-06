@@ -56,9 +56,10 @@ export class VtfDxtEncodings {
                     pixelClosestResult = paletteEntry;
                 }
             }
+            pixelClosestResult = [0, 2, 3, 1][pixelClosestResult];
             indexed[pixel / 4] = pixelClosestResult;
         }
-        return [indexed, duo.a, duo.b];
+        return [indexed, palette[0], palette[3]];
     }
 }
 VtfDxtEncodings.DXT1 = {
@@ -67,20 +68,23 @@ VtfDxtEncodings.DXT1 = {
     encode: function (image) {
         /* Group pixels into 4x4 blocks. */
         const grouped = VtfDxtEncodings.groupBlocks(image);
-        const target = new DataView(new ArrayBuffer(image.data.length / 4));
+        const target = new DataView(new ArrayBuffer(image.data.length / 8));
         var pointer = 0;
         for (var block = 0; block < grouped.length; block++) {
+            /* Compress pixel groups with palette */
             const [indexed, paletteA, paletteB] = VtfDxtEncodings.palettizeBlock(grouped[block]);
-            for (var i = 0; i < indexed.length; i += 4) {
-                target.setInt8(pointer, ((indexed[i + 3] >> 0 & 0b11000000) |
-                    (indexed[i + 2] >> 2 & 0b00110000) |
-                    (indexed[i + 1] >> 4 & 0b00001100) |
-                    (indexed[i + 0] >> 6 & 0b00000011)));
-                pointer += 1;
-            }
+            /* Write palette */
             target.setInt16(pointer, paletteA.value(), true);
             target.setInt16(pointer + 2, paletteB.value(), true);
             pointer += 4;
+            /* Write pixel data */
+            for (var i = 0; i < indexed.length; i += 4) {
+                target.setInt8(pointer, ((indexed[i + 3] << 6 & 0b11000000) |
+                    (indexed[i + 2] << 4 & 0b00110000) |
+                    (indexed[i + 1] << 2 & 0b00001100) |
+                    (indexed[i + 0] << 0 & 0b00000011)));
+                pointer += 1;
+            }
         }
         return new Uint8Array(target.buffer);
     },
