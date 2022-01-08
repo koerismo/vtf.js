@@ -2,7 +2,9 @@ import { Color } from "./VtfContainer.js";
 export class VtfDxtEncodings {
     static groupBlocks(image) {
         const grouped = new Array(image.data.length / 64);
-        grouped.fill(new Uint8Array(64));
+        for (let i = 0; i < grouped.length; i++) {
+            grouped[i] = new Uint8Array(64);
+        }
         for (let pointer = 0; pointer < image.data.length; pointer += 4) {
             // Pixel index
             const pixel = pointer / 4;
@@ -46,7 +48,8 @@ export class VtfDxtEncodings {
             Color.lerp(duo.a, duo.b, 0.666),
             duo.b
         ];
-        if (duo.a.value() < duo.b.value()) {
+        const duoAValue = duo.a.value(), duoBValue = duo.b.value();
+        if (duoAValue < duoBValue) {
             palette.reverse();
         }
         const indexed = new Uint8Array(16);
@@ -69,7 +72,7 @@ export class VtfDxtEncodings {
                     pixelClosestResult = 2;
                     break;
                 case 2:
-                    pixelClosestResult = 3;
+                    pixelClosestResult = 3 - (duoAValue == duoBValue);
                     break;
                 case 3:
                     pixelClosestResult = 1;

@@ -180,7 +180,7 @@ export class Color {
     value() {
         return ((this.r << 8 & 0b1111100000000000) |
             (this.g << 3 & 0b0000011111100000) |
-            (this.r >> 3 & 0b0000000000011111));
+            (this.b >> 3 & 0b0000000000011111));
     }
     static diff(A, B) {
         return ((B.r - A.r) ** 2 + (B.g - A.g) ** 2 + (B.b - A.b) ** 2) ** 0.5;
