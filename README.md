@@ -16,7 +16,7 @@ Supports VTF versions `7.3` through `7.5`.
 
 ### Importing:
 ```js
-import { Vtf, VtfImageResource } from 'https://cdn.jsdelivr.net/gh/koerismo/vtf.js@latest/vtf.js';
+import { Vtf, VtfImageResource, Frame } from 'https://cdn.jsdelivr.net/gh/koerismo/vtf.js@latest/vtf.js';
 ```
 
 ### Example Usage:
