@@ -3,7 +3,7 @@
 		<title>VTF.JS Demo</title>
 		<style>
 		body {
-			background: #111;
+			background: #1a1a1a;
 			color: #eee;
 			font-family: sans-serif;
 			font-weight: lighter;
@@ -12,8 +12,8 @@
 
 		img {
 			display: block;
-			width: 128px;
-			height: 128px;
+			max-width: 256px;
+			max-height: 256px;
 		}
 
 		code {
@@ -27,18 +27,19 @@
 		input {
 			margin: 20px 0;
 			display: block;
-			background: #222;
-			padding: 10px;
-			border: 1px solid #444;
-			border-radius: 5px;
+			background: #111;
+			padding: 5px;
+			border: 1px solid #fff2;
+			border-radius: 2px;
 		}
 
 		.multiline-code {
-			background: rgb(47, 47, 59);
+			background: #111;
 			color: rgba(255, 255, 255, 0.685);
 			font-family: monospace;
 			padding: 5px;
-			border-radius: 5px;
+			border-radius: 2px;
+			border: 1px solid #fff2;
 		}
 		</style>
 	</head>
@@ -49,11 +50,14 @@
 		<input id="inp" type="file">
 		<script type="module" src="demo.js"></script>
 		<p>
-			Code example:<br>
-			<div class="multiline-code">
-				var myVTF = new VTF( [img], 'RGBA8888' );<br>
-				saveAs( myVTF.blob(), 'myVTF.vtf' );
-			</div>
+Code example:<br>
+<div class="multiline-code"><pre>
+	var myResource = new VtfImageResource([
+		new Frame( img )
+	]);
+	var myVTF = new Vtf( [img.width, img.height], [myResource], 'RGBA8888' );
+	saveAs( myVTF.blob(), 'myVTF.vtf' );
+</pre></div>
 		</p>
 	</body>
 </html>

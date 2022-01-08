@@ -1,38 +1,37 @@
 # vtf.js
-A javascript library for converting images to the Valve Texture Format
+*A modular typescript-javascript library for writing images in the Valve Texture Format.*
 
-## vtf-legacy.js
-Version 1.0 of vtf.js. Only supports RGBA8888.
-
-## vtf.js
-*Special thanks to [@TeamSpen210](https://github.com/TeamSpen210) for helping me develop this!*
-
-
-Version 3.0 of vtf.js. Rewritten entirely, this version supports the following formats:
+Includes the following formats by default:
 - RGBA8888
 - RGB888
 - RGB565
 - I8
 - A8
 - IA88
-- ~~DXT1~~ (Not reimplemented yet.)
+- DXT1
 
-**Currently only supports VTF v7.1-v7.2**
+Supports VTF versions `7.3` through `7.5`.
 
-Importing:
+---
+
+### Importing:
 ```js
-import { VTF, VTF_FLAGS } from 'https://cdn.jsdelivr.net/gh/koerismo/vtf.js@latest/vtf.js';
+import { Vtf, VtfImageResource } from 'https://cdn.jsdelivr.net/gh/koerismo/vtf.js@latest/vtf.js';
 ```
 
-Usage:
+### Example Usage:
 ```js
 var myImage = new Image();
 myImage.onload = () => {
-	var myVTF = new VTF( [myImage], 'RGBA8888' );
-	// Blob data can be retrieved through myVTF.blob()
+	var myResource = new VtfImageResource([
+		new Frame( myImage )
+	]);
+	var myVTF = new Vtf( [myImage.width, myImage.height], [myResource], 'RGBA8888' );
+	saveAs( myVTF.blob(), 'myVTF.vtf' );
 }
 myImage.src = ''; // REPLACE THIS WITH A DATA URL
 ```
 
-### Write Speeds
-Write speed comparisons for v3 have not been tested.
+#### **[See Live Demo](koerismo.github.io/vtf.js/demo/demo.html)**
+
+---

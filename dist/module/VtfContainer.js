@@ -104,6 +104,9 @@ export class Vtf {
         }
         return target;
     }
+    blob() {
+        return new Blob([this.body()]);
+    }
 }
 /* Static Component */
 Vtf.codecs = {};

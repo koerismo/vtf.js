@@ -139,6 +139,10 @@ export class Vtf {
 
 		return target;
 	}
+
+	public blob() {
+		return new Blob([ this.body() ]);
+	}
 }
 
 
