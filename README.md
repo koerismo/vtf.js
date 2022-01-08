@@ -32,6 +32,6 @@ myImage.onload = () => {
 myImage.src = ''; // REPLACE THIS WITH A DATA URL
 ```
 
-#### **[See Live Demo](koerismo.github.io/vtf.js/demo/demo.html)**
+#### **[See Live Demo](https://koerismo.github.io/vtf.js/demo/demo.html)**
 
 ---
