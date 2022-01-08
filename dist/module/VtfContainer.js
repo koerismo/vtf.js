@@ -170,3 +170,22 @@ export class VtfImageResource extends VtfResource {
         return target;
     }
 }
+export class Color {
+    constructor(r, g, b, a = 255) {
+        this.r = r,
+            this.g = g,
+            this.b = b,
+            this.a = a;
+    }
+    value() {
+        return ((this.r << 8 & 0b1111100000000000) |
+            (this.g << 3 & 0b0000011111100000) |
+            (this.r >> 3 & 0b0000000000011111));
+    }
+    static diff(A, B) {
+        return ((B.r - A.r) ** 2 + (B.g - A.g) ** 2 + (B.b - A.b) ** 2) ** 0.5;
+    }
+    static lerp(A, B, mix) {
+        return new Color(B.r * mix + A.r * (1 - mix), B.g * mix + A.g * (1 - mix), B.b * mix + A.b * (1 - mix));
+    }
+}

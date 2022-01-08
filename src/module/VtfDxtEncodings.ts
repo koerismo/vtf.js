@@ -1,4 +1,4 @@
-import { VtfImageData } from "./VtfContainer.js";
+import { VtfImageData, Color } from "./VtfContainer.js";
 
 export class VtfDxtEncodings {
 	
@@ -7,11 +7,16 @@ export class VtfDxtEncodings {
 		const grouped: Array<Uint8Array> = new Array( image.data.length / 64 );
 		grouped.fill(new Uint8Array( 64 ));
 
-		for ( var pointer = 0; pointer < image.data.length; pointer+=4 ) {
+		for ( let pointer = 0; pointer < image.data.length; pointer+=4 ) {
 
-			const x = ( pointer/4 ) % image.width;
-			const y = Math.floor( pointer/image.width/4 );
+			// Pixel index
+			const pixel = pointer / 4;
 
+			// Pixel coordinates
+			const x = pixel % image.width;
+			const y = Math.floor( pixel/image.width );
+
+			// 4x4 block index (right to left, top to bottom), pixel index within block
 			const group = Math.floor(x/4) + Math.floor(y/4) * image.width/4;
 			const groupPixelIndex = (x%4 + (y%4)*4) * 4;
 
@@ -19,6 +24,8 @@ export class VtfDxtEncodings {
 			grouped[group][groupPixelIndex+1] = image.data[pointer+1],
 			grouped[group][groupPixelIndex+2] = image.data[pointer+2],
 			grouped[group][groupPixelIndex+3] = image.data[pointer+3];
+
+			//console.log(`Pixel ${pixel} - coordinates ${x},${y} - group ${group} - group pixel ${groupPixelIndex/4}`)
 		}
 
 		return grouped;
@@ -31,8 +38,8 @@ export class VtfDxtEncodings {
 		var maxContrastDiff = 0;
 		const duo = { a: null, b: null };
 
-		for ( var pixA = 0; pixA < block.length; pixA += 4 ) {
-			for ( var pixB = pixA; pixB < block.length; pixB += 4 ) {
+		for ( let pixA = 0; pixA < block.length; pixA += 4 ) {
+			for ( let pixB = pixA; pixB < block.length; pixB += 4 ) {
 				if ( pixA == pixB ) { continue }
 				const colA = new Color( block[pixA], block[pixA+1], block[pixA+2] );
 				const colB = new Color( block[pixB], block[pixB+1], block[pixB+2] );
@@ -61,22 +68,35 @@ export class VtfDxtEncodings {
 
 		/* For each pixel, find the closest palette entry and index it. */
 
-		for ( var pixel = 0; pixel < block.length; pixel += 4 ) {
-			var pixelMinPaletteDiff: number = null;
-			var pixelClosestResult: number = null;
+		for ( let pixel = 0; pixel < block.length; pixel += 4 ) {
+
+			let pixelMinPaletteDiff: number = 442; // Slightly higher than the maximum possible difference, just as a starting value.
+			let pixelClosestResult: number = null; // The choice for what palette index matches the best
 			const pixelColor = new Color( block[pixel], block[pixel+1], block[pixel+2] );
 
-			for ( var paletteEntry = 0; paletteEntry < 4; paletteEntry++ ) {
+			for ( let paletteEntry = 0; paletteEntry < 4; paletteEntry++ ) {
 
 				const currentDiff = Color.diff( palette[paletteEntry], pixelColor );
-				if ( currentDiff <= pixelMinPaletteDiff || pixelMinPaletteDiff == null ) {
+				if ( currentDiff <= pixelMinPaletteDiff ) {
 					pixelMinPaletteDiff = currentDiff;
 					pixelClosestResult = paletteEntry;
 				}
 			}
 
-			pixelClosestResult = [0,2,3,1][pixelClosestResult];
-
+			switch( pixelClosestResult ) {
+				case 0:
+					break;
+				case 1:
+					pixelClosestResult = 2;
+					break;
+				case 2:
+					pixelClosestResult = 3;
+					break;
+				case 3:
+					pixelClosestResult = 1;
+					break;
+			}
+			
 			indexed[pixel/4] = pixelClosestResult;
 		}
 
@@ -134,43 +154,6 @@ export class VtfDxtEncodings {
 		decode: function( data: VtfImageData ): ImageData {
 			return;
 		}
-	}
-
-}
-
-
-class Color {
-
-	public r: number;
-	public g: number;
-	public b: number;
-	public a: number;
-
-	constructor( r:number, g:number, b:number, a:number=255 ) {
-		this.r = r,
-		this.g = g,
-		this.b = b,
-		this.a = a;
-	}
-
-	value() {
-		return (
-			(this.r << 8 & 0b1111100000000000) |
-			(this.g << 3 & 0b0000011111100000) |
-			(this.r >> 3 & 0b0000000000011111)
-		)
-	}
-
-	static diff( A: Color, B: Color ) {
-		return ( (B.r-A.r)**2 + (B.g-A.g)**2 + (B.b-A.b)**2 )**0.5
-	}
-
-	static lerp( A: Color, B: Color, mix:number ) {
-		return new Color(
-			B.r * mix + A.r * (1-mix),
-			B.g * mix + A.g * (1-mix),
-			B.b * mix + A.b * (1-mix)
-		);
 	}
 
 }

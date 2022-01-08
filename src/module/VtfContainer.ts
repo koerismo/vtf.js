@@ -175,6 +175,7 @@ export class VtfImageData {
 	}
 }
 
+
 export class VtfResource {
 
 	public data: Uint8Array|null;
@@ -198,6 +199,7 @@ export class VtfResource {
 		return this.data;
 	}
 }
+
 
 export class VtfImageResource extends VtfResource {
 
@@ -237,3 +239,39 @@ export class VtfImageResource extends VtfResource {
 	}
 }
 
+
+export class Color {
+
+	public r: number;
+	public g: number;
+	public b: number;
+	public a: number;
+
+	constructor( r:number, g:number, b:number, a:number=255 ) {
+		this.r = r,
+		this.g = g,
+		this.b = b,
+		this.a = a;
+	}
+
+	value() {
+		return (
+			(this.r << 8 & 0b1111100000000000) |
+			(this.g << 3 & 0b0000011111100000) |
+			(this.r >> 3 & 0b0000000000011111)
+		)
+	}
+
+	static diff( A: Color, B: Color ) {
+		return ( (B.r-A.r)**2 + (B.g-A.g)**2 + (B.b-A.b)**2 )**0.5
+	}
+
+	static lerp( A: Color, B: Color, mix:number ) {
+		return new Color(
+			B.r * mix + A.r * (1-mix),
+			B.g * mix + A.g * (1-mix),
+			B.b * mix + A.b * (1-mix)
+		);
+	}
+
+}
