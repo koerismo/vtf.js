@@ -1,3 +1,15 @@
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, state, value, kind, f) {
+    if (kind === "m") throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, state, kind, f) {
+    if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+};
+var _FrameReadOnly_mipmaps, _FrameReadOnly_vtf;
 import "./DataViewString.js";
 export class Vtf {
     constructor(size, resources, format = 'RGB888', mipmaps = 1, version = [7, 5], flags = 0) {
@@ -23,6 +35,13 @@ export class Vtf {
             throw ('Codec lacks decoder function!');
         }
         this.codecs[encoder.name] = encoder;
+    }
+    static codecByIndex(index) {
+        for (let c = 0; c < Object.keys(this.codecs).length; c++) {
+            if (this.codecs[Object.keys(this.codecs)[c]].index == index) {
+                return this.codecs[c];
+            }
+        }
     }
     getResource(tag) {
         var out = null;
@@ -80,7 +99,8 @@ export class Vtf {
         headers.push(this.header());
         var pointer = this.resources.length * 8 + headers[0].length;
         for (var i in this.resources) {
-            const entryHeader = this.resources[i].header(pointer);
+            this.resources[i].offset = pointer;
+            const entryHeader = this.resources[i].header();
             const entryBody = this.resources[i].body(this);
             pointer += entryBody.length;
             headers.push(entryHeader);
@@ -107,6 +127,51 @@ export class Vtf {
     blob() {
         return new Blob([this.body()]);
     }
+    static load(buffer) {
+        const data = new DataView(buffer);
+        /* Read header */
+        if (data.byteLength < 4 || data.getString(0, 4) != 'VTF\0') {
+            throw ('ParseError: File missing VTF signature!');
+        }
+        const vtfVersion = [data.getUint32(4, true), data.getUint32(8, true)];
+        const vtfHeaderSize = data.getUint32(12, true);
+        const vtfImageSize = [data.getUint16(16, true), data.getUint16(18, true)];
+        const vtfFlags = data.getUint32(20, true);
+        const vtfFrameCount = data.getUint16(24);
+        // Frame first index
+        // Reflectivity vector
+        // Bumpmap scale
+        const vtfFormat = data.getUint32(52, true);
+        const vtfMipmapCount = data.getUint8(56);
+        // Low-res image format. (Unnecessary to read, always DXT1)
+        const VtfLowResImageSize = [data.getUint8(61), data.getUint8(62)];
+        // Imaege depth
+        const vtfResourceCount = data.getUint32(68, true);
+        // Resources start at 76
+        if (vtfVersion[0] != 7 || vtfVersion[1] < 3 || vtfVersion[1] > 5) {
+            throw (`ParseError: File using unsupported version (${vtfVersion[0]}.${vtfVersion[1]})`);
+        }
+        /* Read resources */
+        const vtfResources = new Array(vtfResourceCount);
+        let resourceBodyPointer = vtfHeaderSize;
+        for (let res = 0; res < vtfResourceCount; res++) {
+            const i = vtfHeaderSize - vtfResourceCount * 8 + res * 8;
+            const resourceTag = data.getString(i, 3);
+            const resourceFlags = data.getUint8(i + 3);
+            const resourceBodyOffset = data.getUint32(i + 4, true);
+            // Add dummy resources to the list with header data
+            vtfResources[res] = new VtfResource(new Uint8Array(0), resourceTag);
+            vtfResources[res].flags = resourceFlags;
+            vtfResources[res].offset = resourceBodyOffset;
+        }
+        // Go through the list again and fill out all of the bodies
+        for (let res = 0; res < vtfResourceCount; res++) {
+            const resourceBodyLength = (res + 1 < vtfResourceCount) ? vtfResources[res + 1].offset : data.byteLength;
+            vtfResources[res].readFrom(data, resourceBodyLength);
+        }
+        const vtf = new Vtf(vtfImageSize, vtfResources, Vtf.codecByIndex(vtfFormat), vtfMipmapCount, vtfVersion, vtfFlags);
+        return vtf;
+    }
 }
 /* Static Component */
 Vtf.codecs = {};
@@ -123,6 +188,20 @@ export class Frame {
         return context.getImageData(0, 0, canvas.width, canvas.height);
     }
 }
+export class FrameReadOnly {
+    constructor(vtf, mipmaps) {
+        _FrameReadOnly_mipmaps.set(this, void 0);
+        _FrameReadOnly_vtf.set(this, void 0);
+        __classPrivateFieldSet(this, _FrameReadOnly_mipmaps, mipmaps, "f");
+    }
+    mipmap(depth) {
+        if (depth < 1 || depth > __classPrivateFieldGet(this, _FrameReadOnly_vtf, "f").mipmaps) {
+            throw (`ValueError: Mipmap of depth ${depth} is out of range!`);
+        }
+        return __classPrivateFieldGet(this, _FrameReadOnly_mipmaps, "f")[depth];
+    }
+}
+_FrameReadOnly_mipmaps = new WeakMap(), _FrameReadOnly_vtf = new WeakMap();
 export class VtfImageData {
     constructor(data, width, height) {
         this.data = data,
@@ -134,16 +213,27 @@ export class VtfResource {
     constructor(data, tag) {
         this.data = data;
         this.tag = tag;
+        this.offset = -1;
     }
-    header(offset) {
+    header() {
         const data = new DataView(new ArrayBuffer(8));
         data.setString(0, this.tag, 'ASCII'); // Resource type tag
         data.setUint8(3, 0); // Flag (not applicable)
-        data.setUint32(4, offset, true); // Resource data file offset
+        data.setUint32(4, this.offset, true); // Resource data file offset
         return new Uint8Array(data.buffer);
     }
     body(vtf) {
         return this.data;
+    }
+    readFrom(data, length, offset) {
+        if (offset == undefined) {
+            offset = this.offset;
+        }
+        this.data = new Uint8Array(length);
+        for (let byte = offset; byte < offset + length; byte++) {
+            this.data[byte] = data[byte + offset];
+        }
+        return;
     }
 }
 export class VtfImageResource extends VtfResource {

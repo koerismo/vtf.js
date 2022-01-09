@@ -18,6 +18,12 @@ globalThis.img = new Image();
 document.body.appendChild(img);
 i.oninput = () => {
 	const fr = new FileReader();
-	fr.onload = () => { img.src = fr.result; }
-	fr.readAsDataURL(i.files[0]);
+	if (i.files[0].name.endsWith('vtf')) {
+		fr.onload = () => { img = fr.result; }
+		fr.readAsArrayBuffer(i.files[0]);
+	}
+	else {
+		fr.onload = () => { img.src = fr.result; }
+		fr.readAsDataURL(i.files[0]);
+	}
 }
