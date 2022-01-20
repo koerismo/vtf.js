@@ -5,6 +5,7 @@ export class VtfEncodings {
 	static RGBA8888 = {
 		name: 'RGBA8888',
 		index: 0,
+		ratio: 4,
 		encode: function( image: ImageData ): Uint8Array {
 			return new Uint8Array( image.data );
 
@@ -17,6 +18,7 @@ export class VtfEncodings {
 	static ABGR8888 = {
 		name: 'ABGR8888',
 		index: 1,
+		ratio: 4,
 		encode: function( image: ImageData ): Uint8Array {
 
 			const target = new Uint8Array( image.data.length )
@@ -46,6 +48,7 @@ export class VtfEncodings {
 	static RGB888 = {
 		name: 'RGB888',
 		index: 2,
+		ratio: 3,
 		encode: function( image: ImageData ): Uint8Array {
 
 			const target = new Uint8Array( image.data.length * 3/4 )
@@ -75,6 +78,7 @@ export class VtfEncodings {
 	static BGR888 = {
 		name: 'BGR888',
 		index: 3,
+		ratio: 3,
 		encode: function( image: ImageData ): Uint8Array {
 
 			const target = new Uint8Array( image.data.length * 3/4 )
@@ -104,6 +108,7 @@ export class VtfEncodings {
 	static RGB565 = {
 		name: 'RGB565',
 		index: 4,
+		ratio: 2,
 		encode: function( image: ImageData ): Uint8Array {
 
 			const target = new DataView(new ArrayBuffer( image.data.length / 2 ))

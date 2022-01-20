@@ -3,6 +3,7 @@ import "./DataViewString.js";
 interface VtfCodec {
 	name: string,
 	index: number,
+	ratio: number,
 	encode: Function,
 	decode: Function
 }
@@ -176,7 +177,7 @@ export class Vtf {
 		// Frame first index
 		// Reflectivity vector
 		// Bumpmap scale
-		const vtfFormat =			data.getUint32( 52, true );
+		const vtfFormat =			Vtf.codecByIndex(data.getUint32( 52, true ));
 		const vtfMipmapCount =		data.getUint8( 56 );
 		// Low-res image format. (Unnecessary to read, always DXT1)
 		const VtfLowResImageSize =	[ data.getUint8(61), data.getUint8(62) ];
@@ -198,7 +199,7 @@ export class Vtf {
 			const i = vtfHeaderSize - vtfResourceCount*8 + res*8;
 
 			const resourceTag = data.getString( i, 3 );
-			const resourceFlags = data.getUint8( i+3 );
+			const resourceFlags = data.getUint8( i + 3 );
 			const resourceBodyOffset = data.getUint32( i+4, true );
 
 			// Add dummy resources to the list with header data
@@ -213,7 +214,32 @@ export class Vtf {
 			vtfResources[res].readFrom( data, resourceBodyLength );
 		}
 
-		const vtf = new Vtf( vtfImageSize, vtfResources, Vtf.codecByIndex(vtfFormat), vtfMipmapCount, vtfVersion, vtfFlags );
+		// Create VTF
+		const vtf = new Vtf( vtfImageSize, vtfResources, vtfFormat, vtfMipmapCount, vtfVersion, vtfFlags );
+
+
+		/* Process image */
+
+
+		// Deconstruct mipmaps
+		const vtfImageBody = vtf.getResource('\x30\0\0');
+		if ( vtfImageBody == null ) {
+			throw( 'ParseError: VTF does not have a body resource entry' )
+		}
+
+		const vtfParsedMipmaps = new Array( vtfMipmapCount );
+		let vtfMipmapIndex = vtfHeaderSize;
+		for ( let m = vtfMipmapCount; m > 0; m-- ) {
+			const vtfMipmapByteLength = (vtfImageSize[0] * vtfImageSize[1]) * 0.25**(m-1) * Vtf.codecs[vtfFormat].ratio;
+			vtfParsedMipmaps[vtfMipmapCount-m] = new Uint8Array( vtfMipmapByteLength );
+			
+			// DO ALL READING STUFF HERE
+
+
+			vtfMipmapIndex += vtfMipmapByteLength;
+		}
+		
+
 		return vtf;
 	}
 }

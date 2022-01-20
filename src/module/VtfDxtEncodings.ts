@@ -113,6 +113,7 @@ export class VtfDxtEncodings {
 	static DXT1 = {
 		name: 'DXT1',
 		index: 13,
+		ratio: 1,
 		encode: function( image: ImageData ): Uint8Array {
 
 			/* Group pixels into 4x4 blocks. */
@@ -153,6 +154,7 @@ export class VtfDxtEncodings {
 	static DXT5 = {
 		name: 'DXT5',
 		index: 15,
+		ratio: 2,
 		encode: function( image: ImageData ): Uint8Array {
 			return;
 		},

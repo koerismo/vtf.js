@@ -169,7 +169,19 @@ export class Vtf {
             const resourceBodyLength = (res + 1 < vtfResourceCount) ? vtfResources[res + 1].offset : data.byteLength;
             vtfResources[res].readFrom(data, resourceBodyLength);
         }
+        // Create VTF
         const vtf = new Vtf(vtfImageSize, vtfResources, Vtf.codecByIndex(vtfFormat), vtfMipmapCount, vtfVersion, vtfFlags);
+        // Deconstruct mipmaps
+        const vtfImageBody = vtf.getResource('\x30\0\0');
+        if (vtfImageBody == null) {
+            throw ('ParseError: VTF does not have a body resource entry');
+        }
+        let vtfImageBodyTargetlength = 0;
+        for (let m = 0; m < vtfMipmapCount; m++) {
+            vtfImageBodyTargetlength += (vtfImageSize[0] * vtfImageSize[1]) / 2 ** m;
+        }
+        const imagePixelRatio = vtfImageBody.data.byteLength / vtfImageBodyTargetlength;
+        console.log(`pixel ratio is ${imagePixelRatio}`);
         return vtf;
     }
 }
