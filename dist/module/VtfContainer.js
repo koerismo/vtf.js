@@ -37,9 +37,10 @@ export class Vtf {
         this.codecs[encoder.name] = encoder;
     }
     static codecByIndex(index) {
-        for (let c = 0; c < Object.keys(this.codecs).length; c++) {
-            if (this.codecs[Object.keys(this.codecs)[c]].index == index) {
-                return this.codecs[c];
+        const keys = Object.keys(this.codecs);
+        for (let c = 0; c < keys.length; c++) {
+            if (this.codecs[keys[c]].index == index) {
+                return this.codecs[keys[c]];
             }
         }
     }
@@ -141,7 +142,7 @@ export class Vtf {
         // Frame first index
         // Reflectivity vector
         // Bumpmap scale
-        const vtfFormat = data.getUint32(52, true);
+        const vtfFormat = Vtf.codecByIndex(data.getUint32(52, true));
         const vtfMipmapCount = data.getUint8(56);
         // Low-res image format. (Unnecessary to read, always DXT1)
         const VtfLowResImageSize = [data.getUint8(61), data.getUint8(62)];
@@ -170,18 +171,24 @@ export class Vtf {
             vtfResources[res].readFrom(data, resourceBodyLength);
         }
         // Create VTF
-        const vtf = new Vtf(vtfImageSize, vtfResources, Vtf.codecByIndex(vtfFormat), vtfMipmapCount, vtfVersion, vtfFlags);
+        const vtf = new Vtf(vtfImageSize, vtfResources, vtfFormat.name, vtfMipmapCount, vtfVersion, vtfFlags);
+        /* Process image */
         // Deconstruct mipmaps
         const vtfImageBody = vtf.getResource('\x30\0\0');
         if (vtfImageBody == null) {
             throw ('ParseError: VTF does not have a body resource entry');
         }
-        let vtfImageBodyTargetlength = 0;
-        for (let m = 0; m < vtfMipmapCount; m++) {
-            vtfImageBodyTargetlength += (vtfImageSize[0] * vtfImageSize[1]) / 2 ** m;
+        const vtfParsedMipmaps = new Array(vtfMipmapCount);
+        let vtfMipmapIndex = vtfImageBody.offset;
+        console.log(vtfImageBody, vtfParsedMipmaps, vtfMipmapCount);
+        for (let m = vtfMipmapCount; m > 0; m--) {
+            const vtfMipmapByteLength = (vtfImageSize[0] * vtfImageSize[1]) * 0.25 ** (m - 1) * vtfFormat.ratio;
+            vtfParsedMipmaps[vtfMipmapCount - m] = new Uint8Array(vtfMipmapByteLength);
+            for (let i = 0; i < vtfMipmapByteLength; i++) {
+                vtfParsedMipmaps[vtfMipmapCount - m][i] = data.getUint8(i + vtfMipmapIndex);
+            }
+            vtfMipmapIndex += vtfMipmapByteLength;
         }
-        const imagePixelRatio = vtfImageBody.data.byteLength / vtfImageBodyTargetlength;
-        console.log(`pixel ratio is ${imagePixelRatio}`);
         return vtf;
     }
 }

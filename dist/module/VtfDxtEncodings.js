@@ -86,6 +86,7 @@ export class VtfDxtEncodings {
 VtfDxtEncodings.DXT1 = {
     name: 'DXT1',
     index: 13,
+    ratio: 1,
     encode: function (image) {
         /* Group pixels into 4x4 blocks. */
         const grouped = VtfDxtEncodings.groupBlocks(image);
@@ -116,6 +117,7 @@ VtfDxtEncodings.DXT1 = {
 VtfDxtEncodings.DXT5 = {
     name: 'DXT5',
     index: 15,
+    ratio: 2,
     encode: function (image) {
         return;
     },

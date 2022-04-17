@@ -23,9 +23,10 @@ export class Vtf {
 	}
 
 	static codecByIndex( index: number ) {
-		for ( let c = 0; c < Object.keys(this.codecs).length; c++ ) {
-			if ( this.codecs[Object.keys(this.codecs)[c]].index == index ) {
-				return this.codecs[c]
+		const keys = Object.keys( this.codecs );
+		for ( let c = 0; c < keys.length; c++ ) {
+			if ( this.codecs[keys[c]].index == index ) {
+				return this.codecs[keys[c]]
 			}
 		}
 	}
@@ -195,6 +196,7 @@ export class Vtf {
 		const vtfResources = new Array( vtfResourceCount );
 		let resourceBodyPointer = vtfHeaderSize;
 
+		// Read resource headers
 		for ( let res = 0; res < vtfResourceCount; res++ ) {
 			const i = vtfHeaderSize - vtfResourceCount*8 + res*8;
 
@@ -215,7 +217,7 @@ export class Vtf {
 		}
 
 		// Create VTF
-		const vtf = new Vtf( vtfImageSize, vtfResources, vtfFormat, vtfMipmapCount, vtfVersion, vtfFlags );
+		const vtf = new Vtf( vtfImageSize, vtfResources, vtfFormat.name, vtfMipmapCount, vtfVersion, vtfFlags );
 
 
 		/* Process image */
@@ -228,13 +230,16 @@ export class Vtf {
 		}
 
 		const vtfParsedMipmaps = new Array( vtfMipmapCount );
-		let vtfMipmapIndex = vtfHeaderSize;
+		let vtfMipmapIndex = vtfImageBody.offset;
+
 		for ( let m = vtfMipmapCount; m > 0; m-- ) {
-			const vtfMipmapByteLength = (vtfImageSize[0] * vtfImageSize[1]) * 0.25**(m-1) * Vtf.codecs[vtfFormat].ratio;
+
+			const vtfMipmapByteLength = (vtfImageSize[0] * vtfImageSize[1]) * 0.25**(m-1) * vtfFormat.ratio;
 			vtfParsedMipmaps[vtfMipmapCount-m] = new Uint8Array( vtfMipmapByteLength );
 			
-			// DO ALL READING STUFF HERE
-
+			for ( let i = 0; i < vtfMipmapByteLength; i++ ) {
+				vtfParsedMipmaps[vtfMipmapCount-m][i] = data.getUint8( i + vtfMipmapIndex )
+			}
 
 			vtfMipmapIndex += vtfMipmapByteLength;
 		}
