@@ -95,6 +95,7 @@ export class VtfDxtEncodings {
 					pixelClosestResult = 2;
 					break;
 				case 2:
+					//@ts-ignore boolean -> number typecast
 					pixelClosestResult = 3 - ( duoAValue == duoBValue );
 					break;
 				case 3:
